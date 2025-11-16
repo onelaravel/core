@@ -11,10 +11,13 @@ class ViewService extends Service
     protected $cacheTime = 0;
     public function __construct()
     {
-        parent::__construct();
-        $this->viewInit();
+        $this->init();
+
+    }
+
+    public function initView(){
         $this->cacheKey = md5(static::class);
-        
+        $this->viewInit();
     }
 
 
