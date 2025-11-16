@@ -11,7 +11,7 @@ class ThemeService extends Service
     protected $viewFolder = '';
 
     protected $data = []; // data for the view
-    protected $scope = 'global'; // global, admin, web, account
+    protected $context = 'web'; // global, admin, web, account
 
     protected $themeType = 'static'; // static, dynamic
 

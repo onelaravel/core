@@ -87,4 +87,11 @@ Class CacheEngine{
         }
         return $data;
     }
+    public static function cache($key, $params = [], $callback = null, $time = 0)
+    {
+        if(is_callable($callback)){
+            return static::remember($key, $time, $callback, $params);
+        }
+        return static::get($key, $params);
+    }
 }

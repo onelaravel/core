@@ -50,7 +50,7 @@ trait ModuleMethods
      */
     protected $modulePath = '';
 
-    protected $scope = '';
+    protected $context = '';
 
 
     protected $mode = 'system';

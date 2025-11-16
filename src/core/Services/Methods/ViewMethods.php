@@ -56,33 +56,64 @@ trait ViewMethods
     protected $viewBasePath = null;
 
     protected $defaultViewData = [
-        '_base' => 'web.',
+        '__system__' => '_system.',
+        '__base__' => 'web.',
         'module_slug' => 'web',
         'module_name' => 'Web',
         'route_name_prefix' => 'web',
-        '_component' => 'web.components.',
-        '_template' => 'web.templates.',
-        '_pagination' => 'web.pagination.',
-        '_layout' => 'web.layouts.',
-        '_module' => 'web.modules.',
+        '__component__' => 'web.components.',
+        '__template__' => 'web.templates.',
+        '__pagination__' => 'web.pagination.',
+        '__layout__' => 'web.layouts.',
+        '__module__' => 'web.modules.',
+        '__page__' => 'web.pages.',
     ];
 
     public function viewInit()
     {
-        $this->viewBasePath = ($this->scope ? '.' . $this->scope : '') . ($this->viewFolder ? '.' . $this->viewFolder : '');
+        $this->viewBasePath = ($this->context ? '.' . $this->context : '') . ($this->viewFolder ? '.' . $this->viewFolder : '');
         $this->moduleBlade = ($this->viewBasePath ? '.' . $this->viewBasePath : '') . '.modules';
         $d = $this->viewBasePath ? $this->viewBasePath . '.' : '';
         $this->defaultViewData = [
-            '_base' => $d,
+            '__system__' => '_system.',
+            '__base__' => $d,
             'module_slug' => $this->module,
             'module_name' => $this->moduleName,
             'route_name_prefix' => $this->routeNamePrefix,
-            '_component' => $d . 'components.',
+            '__component__' => $d . 'components.',
             '_template' => $d . 'templates.',
-            '_pagination' => $d . 'pagination.',
-            '_layout' => $d . 'layouts.',
-            '_module' => $d . 'modules.',
+            '__pagination__' => $d . 'pagination.',
+            '__layout__' => $d . 'layouts.',
+            '__module__' => $d . 'modules.',
+            '__page__' => $d . 'pages.',
         ];
+    }
+
+    public function setViewConfig($config = [])
+    {
+        if (is_array($config) && count($config)) {
+            $context = $config['context'] ?? $this->context;
+            $viewFolder = $config['viewFolder'] ?? $this->viewFolder;
+            $this->context = $context;
+            $this->viewFolder = $viewFolder;
+            $this->viewBasePath = $this->context . '.' ;
+            $this->moduleBlade = ($this->viewBasePath ? '.' . $this->viewBasePath : '') . '.modules';
+            $d = $this->viewBasePath ? $this->viewBasePath . '.' : '';
+            $this->defaultViewData = [
+                '__system__' => '_system.',
+                '__base__' => $d,
+                'module_slug' => $this->module,
+                'module_name' => $this->moduleName,
+                'route_name_prefix' => $this->routeNamePrefix,
+                '__component__' => $d . 'components.',
+                '_template' => $d . 'templates.',
+                '__pagination__' => $d . 'pagination.',
+                '__layout__' => $d . 'layouts.',
+                '__module__' => $d . 'modules.',
+                '__page__' => $d . 'pages.',
+            ];
+        }
+        return $this;
     }
 
 
@@ -111,7 +142,7 @@ trait ViewMethods
      */
     public function render(string $bladePath, array $data = [])
     {
-        $d = $this->defaultViewData['_base'];
+        $d = $this->defaultViewData['__base__'];
 
         $bp = $d . $bladePath;
 
