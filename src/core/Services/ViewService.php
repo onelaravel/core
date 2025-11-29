@@ -2,33 +2,39 @@
 
 namespace One\Core\Services;
 
-use One\Core\Engines\CacheEngine;
-
+use One\Core\Services\Methods\ViewMethods;
+use One\Core\Services\Methods\CacheMethods;
 
 class ViewService extends Service
 {
-    use Methods\ViewMethods;
-    protected $cacheTime = 0;
+    use ViewMethods, CacheMethods;
+    
     public function __construct()
     {
         $this->init();
 
     }
 
-    public function initView(){
-        $this->cacheKey = md5(static::class);
-        $this->viewInit();
-    }
+    
 
+
+
+
+
+
+
+    
 
 
     public function __call($method, $params)
     {
-        $name = preg_replace('/Cache$/i', '', $method);
-        if($name != $method && method_exists($this, $name)){
-            return CacheEngine::cache($this->cacheKey . '-' . $name, $params, function() use($params, $name){
+        if(preg_match('/^view([A-Z][a-z0-9_]+)Cache$/i', $method, $matches) && method_exists($this, $name = 'view' . $matches[1])){
+            return $this->cache($this->cacheKey . '-' . $name, $params, function() use($params, $name){
                 return $this->{$name}(...$params);
             }, $this->cacheTime);
+        }
+        if(($value = $this->cacheMacro($method, $params)) !== self::NO_CACHE_VALUE_RETURN){
+            return $value;
         }
         return parent::__call($method, $params);
     }

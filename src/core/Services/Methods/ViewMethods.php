@@ -9,6 +9,22 @@ trait ViewMethods
 {
 
     /**
+     * @var string $context context cua service
+     */
+    protected $context = '';
+    /**
+     * @var string $module day là tên module cung la ten thu muc view va ten so it cua bang, thu muc trong asset
+     * override del chinh sua
+     */
+    protected $module = 'test';
+
+
+    /**
+     * @var string $moduleName tên của module và cũng là tiêu đề trong form
+     */
+    protected $moduleName = '';
+    
+    /**
      * @var string $viewFolder thu muc chua view
      * khong nen thay doi lam gi
      */
@@ -51,7 +67,11 @@ trait ViewMethods
 
     protected $moduleBlade = null;
 
+    protected $pageViewBlade = null;
+
     protected $viewMode = 'direct'; // direct, package, module, theme
+
+    protected $mode = 'system';
 
     protected $viewBasePath = null;
 
@@ -60,7 +80,7 @@ trait ViewMethods
         '__base__' => 'web.',
         'module_slug' => 'web',
         'module_name' => 'Web',
-        'route_name_prefix' => 'web',
+        '__route_prefix__' => 'web.',
         '__component__' => 'web.components.',
         '__template__' => 'web.templates.',
         '__pagination__' => 'web.pagination.',
@@ -69,24 +89,27 @@ trait ViewMethods
         '__page__' => 'web.pages.',
     ];
 
-    public function viewInit()
+    public function initView()
     {
+        if (!$this->moduleBlade) $this->moduleBlade = $this->module;
         $this->viewBasePath = ($this->context ? '.' . $this->context : '') . ($this->viewFolder ? '.' . $this->viewFolder : '');
         $this->moduleBlade = ($this->viewBasePath ? '.' . $this->viewBasePath : '') . '.modules';
         $d = $this->viewBasePath ? $this->viewBasePath . '.' : '';
+        $this->pageViewBlade = $d . 'pages.';
         $this->defaultViewData = [
             '__system__' => '_system.',
             '__base__' => $d,
             'module_slug' => $this->module,
             'module_name' => $this->moduleName,
-            'route_name_prefix' => $this->routeNamePrefix,
+            '__route_prefix__' => $this->routeNamePrefix,
             '__component__' => $d . 'components.',
-            '_template' => $d . 'templates.',
+            '__template__' => $d . 'templates.',
             '__pagination__' => $d . 'pagination.',
             '__layout__' => $d . 'layouts.',
             '__module__' => $d . 'modules.',
             '__page__' => $d . 'pages.',
         ];
+        return $this;
     }
 
     public function setViewConfig($config = [])
@@ -96,15 +119,18 @@ trait ViewMethods
             $viewFolder = $config['viewFolder'] ?? $this->viewFolder;
             $this->context = $context;
             $this->viewFolder = $viewFolder;
-            $this->viewBasePath = $this->context . '.' ;
+            $this->viewBasePath = $this->context . '.';
             $this->moduleBlade = ($this->viewBasePath ? '.' . $this->viewBasePath : '') . '.modules';
+
             $d = $this->viewBasePath ? $this->viewBasePath . '.' : '';
+            $this->pageViewBlade = $d . 'pages.';
+
             $this->defaultViewData = [
                 '__system__' => '_system.',
                 '__base__' => $d,
                 'module_slug' => $this->module,
                 'module_name' => $this->moduleName,
-                'route_name_prefix' => $this->routeNamePrefix,
+                '__route_prefix__' => $this->routeNamePrefix,
                 '__component__' => $d . 'components.',
                 '_template' => $d . 'templates.',
                 '__pagination__' => $d . 'pagination.',
@@ -132,6 +158,121 @@ trait ViewMethods
         $a = $this->fire($event, ...$params);
 
         return null;
+    }
+
+    public function getViewPath(string $bladePath)
+    {
+        return $this->viewBasePath . $bladePath;
+    }
+
+    public function getViewModulePath(string $bladePath)
+    {
+        return $this->moduleBlade . $bladePath;
+    }
+
+    public function getViewPagePath(string $bladePath)
+    {
+        return $this->pageViewBlade . $bladePath;
+    }
+
+    /**
+     * Parse blade path với các alias: @module, @page, @base
+     * 
+     * Hỗ trợ các format:
+     * - @module.index => {moduleBlade}index
+     * - @module:list => {moduleBlade}list
+     * - @page.about => {pageViewBlade}about
+     * - @base.home => {viewBasePath}home
+     * 
+     * @param string $bladePath Đường dẫn blade có thể chứa alias
+     * @return string Đường dẫn blade đã được parse
+     */
+    public function parseBladePath(string $bladePath)
+    {
+        // Kiểm tra @module alias (case-insensitive)
+        if (preg_match('/^@module([\.\:])/i', $bladePath, $matches)) {
+            $separator = $matches[1]; // Lấy dấu . hoặc :
+            $remaining = substr($bladePath, strlen('@module' . $separator));
+
+            // Kiểm tra moduleBlade có giá trị không
+            if ($this->moduleBlade !== null && $this->moduleBlade !== '') {
+                // Đảm bảo có trailing dot nếu cần
+                $moduleBlade = rtrim($this->moduleBlade, '.');
+                return $moduleBlade . '.' . $remaining;
+            }
+            // Nếu moduleBlade null/empty, trả về path gốc (có thể gây lỗi nhưng giữ nguyên behavior)
+            return $bladePath;
+        }
+
+        // Kiểm tra @page alias (case-insensitive)
+        if (preg_match('/^@page([\.\:])/i', $bladePath, $matches)) {
+            $separator = $matches[1];
+            $remaining = substr($bladePath, strlen('@page' . $separator));
+
+            if ($this->pageViewBlade !== null && $this->pageViewBlade !== '') {
+                $pageViewBlade = rtrim($this->pageViewBlade, '.');
+                return $pageViewBlade . '.' . $remaining;
+            }
+            return $bladePath;
+        }
+
+        // Kiểm tra @base alias (case-insensitive)
+        if (preg_match('/^@base([\.\:])/i', $bladePath, $matches)) {
+            $separator = $matches[1];
+            $remaining = substr($bladePath, strlen('@base' . $separator));
+
+            if ($this->viewBasePath !== null && $this->viewBasePath !== '') {
+                $viewBasePath = rtrim($this->viewBasePath, '.');
+                return $viewBasePath . '.' . $remaining;
+            }
+            return $bladePath;
+        }
+        return ($this->viewBasePath ? $this->viewBasePath . '.' : '') . $bladePath;
+    }
+
+
+    /**
+     * Parse blade path với các alias: @module, @page, @base
+     * 
+     * Hỗ trợ các format:
+     * - @module.index => {moduleBlade}index
+     * - @module:list => {moduleBlade}list
+     * - @page.about => {pageViewBlade}about
+     * - @base.home => {viewBasePath}home
+     * 
+     * @param string $bladePath Đường dẫn blade có thể chứa alias
+     * @return string Đường dẫn blade đã được parse
+     */
+    public function getBladeViewRenderConfig(string $bladePath)
+    {
+        $config = [
+            'view' => $bladePath,
+            'method' => 'render',
+        ];
+        // Kiểm tra @module alias (case-insensitive)
+        if (preg_match('/^@module([\.\:])/i', $bladePath, $matches)) {
+            $separator = $matches[1]; // Lấy dấu . hoặc :
+            $remaining = substr($bladePath, strlen('@module' . $separator));
+            $config['view'] = $remaining;
+            $config['method'] = 'renderModule';
+        }
+
+        // Kiểm tra @page alias (case-insensitive)
+        elseif (preg_match('/^@page([\.\:])/i', $bladePath, $matches)) {
+            $separator = $matches[1];
+            $remaining = substr($bladePath, strlen('@page' . $separator));
+            $config['view'] = $remaining;
+            $config['method'] = 'renderPage';
+        }
+
+        // Kiểm tra @base alias (case-insensitive)
+        elseif (preg_match('/^@base([\.\:])/i', $bladePath, $matches)) {
+            $separator = $matches[1];
+            $remaining = substr($bladePath, strlen('@base' . $separator));
+            $config['view'] = $remaining;
+            // $config['method'] = 'render';
+        }
+        return $config;
     }
 
     /**
@@ -191,194 +332,8 @@ trait ViewMethods
         return $this->render($this->moduleBlade . '.' . $subModule, $data);
     }
 
-    /**
-     * lấy danh sách 
-     * @param Request $request
-     * @param array $params
-     * @param array $variable
-     * @return View
-     */
-    public function getFlashModeListData(Request $request, array $params = [], array $variable = [])
+    public function renderPage($page, array $data = [])
     {
-        $this->callViewEvent('beforeGetListData', $request);
-        $data = [];
-        $data['results'] = $this->getResults($request, $params);
-        $arrData = new Arr($data);
-        $this->callViewEvent('beforeGetListView', $request, $arrData);
-        $config = new Arr($this->getListConfigData());
-        $viewData = $arrData->all();
-        $viewData['config'] = $config;
-        $viewShareData = array_merge(['list_group' => 'default'], $variable, $viewData);
-
-        return $this->render('_module.list', $viewShareData);
-    }
-
-    /**
-     * Hiển thị danh sách các kết quar tim dc
-     * @param Request $request
-     * @return View
-     */
-    public function getIndex(Request $request)
-    {
-        if ($this->flashMode) {
-            return $this->getFlashModeListData($request, [], ['list_group' => 'default']);
-        }
-
-        $this->callViewEvent('beforeGetIndexData', $request);
-        $data = [];
-        $data['results'] = $this->getResults($request);
-        $arrData = new Arr($data);
-        $this->callViewEvent('beforeGetIndexView', $request, $arrData);
-        // co the code them =))))))
-
-        return $this->renderModule($this->index, $arrData->all());
-    }
-
-    /**
-     * Hiển thị danh sách các kết quar tim dc
-     * @param Request $request
-     * @return View
-     */
-    function getList(Request $request)
-    {
-        $this->activeMenu($this->module . '.list');
-        if ($this->flashMode) {
-            return $this->getFlashModeListData($request, [], ['list_group' => 'default']);
-        }
-        $this->callViewEvent('beforeGetListData', $request);
-        $data = [];
-        $data['results'] = $this->getResults($request);
-        $arrData = new Arr($data);
-        $this->callViewEvent('beforeGetListView', $request, $arrData);
-
-        // co the code them =))))))
-
-        return $this->renderModule($this->list, $arrData->all());
-    }
-
-
-    /**
-     * Hiển thị danh sách các kết quar tim dc
-     * @param Request $request
-     * @return View
-     */
-    function getDetail(Request $request, $id = null)
-    {
-        $this->repository->notTrashed();
-        if ($this->flashMode) {
-            return $this->getFlashModeDetailData($request);
-        }
-        $this->callViewEvent('beforeGetDetailData', $request);
-
-        $keyName = $this->repository->getKeyName();
-        if ($id && $detail = $this->repository->getDetail([$keyName => $id])) {
-            $data = [];
-            $data['detail'] = $detail;
-            $arrData = new Arr($data);
-            $this->callViewEvent('beforeGetDetailView', $request, $arrData);
-            return $this->renderModule($this->detail, $arrData->all());
-        }
-
-        // co the code them =))))))
-        return $this->showError($request, 404, "Mục này không tồn tại hoặc đã bị xóa");
-    }
-
-
-    /**
-     * Hiển thị danh sách Dã bị xóa tạm thời
-     * @param Request $request
-     * @return View
-     */
-    function getTrash(Request $request)
-    {
-        $this->activeMenu($this->module . '.trash');
-        $this->repository->trashed(true);
-
-        $this->callViewEvent('beforeGetTrashData', $request);
-        if ($this->flashMode) {
-            return $this->getFlashModeListData($request, [], ['list_group' => 'trash']);
-        }
-
-        // co the code them =))))))
-        $data = [];
-        $data['results'] = $this->getResults($request, []);
-        $arrData = new Arr($data);
-        $this->callViewEvent('beforeGetTrashView', $request, $arrData);
-
-        // co the code them =))))))
-
-        return $this->renderModule($this->trash, $arrData->all());
-    }
-
-    /**
-     * hiển thị form thêm mới dữ liệu
-     * @param Request
-     * @return View
-     *
-     * @override để xử lý
-     */
-    public function getCreateForm(Request $request)
-    {
-        $this->activeMenu($this->module . '.create');
-        // return $this->viewModule('add-form');
-        return $this->getCrudForm($request, ['type' => 'create']);
-    }
-
-    /**
-     * hiển thị form cập nhật
-     * @param Request $request
-     * @param int $id
-     * @return View
-     */
-    public function getUpdateForm(Request $request, $id = null)
-    {
-        $this->repository->notTrashed();
-        $keyName = $this->repository->getKeyName();
-        $id = $request->id ?? $request->uuid;
-        if ($id && $detail = $this->repository->getFormData([$keyName => $id])) {
-            $this->repository->setActiveID($detail->{$keyName});
-            $this->activeMenu($this->module . '.update');
-            return $this->getCrudForm($request, ['type' => 'update'], $detail);
-        }
-        return $this->showError($request, 404, "Mục này không tồn tại hoặc đã bị xóa");
-    }
-
-
-
-    /**
-     * hiển thị form thêm mới dữ liệu
-     * @param Request
-     * @return View
-     *
-     * @override để xử lý
-     */
-    public function getFreeForm(Request $request)
-    {
-        return $this->getForm($request, ['type' => 'free']);
-    }
-
-
-    /**
-     * hiển thị lỗi
-     * @param Request $request
-     * @param int $code error code
-     * @param string $message
-     * @return View
-     */
-    public function showError(Request $request, $code = 404, $message = "")
-    {
-        if (!$message && $request->message) $message = $request->message;
-        $code = in_array($code, [403, 404, 500]) ? $code : 404;
-        return $this->render($this->error . '.' . $code, compact('message'));
-    }
-
-    /**
-     * hiển thị lỗi
-     * @param string $message
-     * @return View
-     */
-    public function alert($message = null, $type = null)
-    {
-        return $this->render('alert.message', compact('message', 'type'));
+        return $this->render($this->pageViewBlade . '.' . $page, $data);
     }
 }

@@ -3,13 +3,29 @@
 namespace One\Core\Services\Methods;
 
 use Illuminate\Http\Request;
+use One\Core\Masks\EmptyCollection;
+use One\Core\Masks\EmptyMask;
 use ReflectionClass;
 use One\Core\Validators\ExampleValidator;
 use One\Core\Repositories\BaseRepository;
 
+/**
+ * @method \One\Core\Repositories\BaseRepository getRepository()
+ * @method \One\Core\Repositories\BaseRepository setRepository(\One\Core\Repositories\BaseRepository $repository)
+ * @method \One\Core\Repositories\BaseRepository setRepositoryClass(string $repositoryClass)
+ * @method \One\Core\Repositories\BaseRepository repositoryTap(callable $callback, mixed $default = null, bool $logError = false)
+ * @property mixed $repositoryClass
+ * @property \One\Core\Repositories\BaseRepository $repository
+ * @property string $validatorClass
+ * @property array $validateAttrs
+ * @property string $validatorNamespace
+ * @property \One\Core\Repositories\BaseRepository $validatorRepository
+ * @property string $appNamespace
+ * @property \One\Core\Validators\Validator $validator
+ */
 trait CRUDMethods
 {
-     /**
+    /**
      * @var string $validatorClass
      * full class name 
      */
@@ -43,51 +59,16 @@ trait CRUDMethods
     protected $validatorRepository = null;
 
 
-    /**
-     * @var \One\Core\Repositories\BaseRepository $repository
-     */
-    protected $repository = null;
 
 
-    /**
-     * @var string $repositoryClass
-     * full class name 
-     */
-    protected $repositoryClass = '';
-
-
-    public function initCRUD(){
-        if($this->repositoryClass){
-            $this->setRepositoryClass($this->repositoryClass);
-        }
-        return $this;
-    }
-
-
-
-    public function setRepositoryClass($repositoryClass)
+    public function initCRUD()
     {
-        if(is_string($repositoryClass) && class_exists($repositoryClass)){
-            $this->repositoryClass = $repositoryClass;
-        }
 
         return $this;
     }
 
 
-    public function setRepository($repository){
-        if(is_object($repository) && ($repository instanceof BaseRepository || is_a($repository, BaseRepository::class))){
-            $this->repository = $repository;
-        }
-        elseif(is_string($repository) && class_exists($repository)){
-            $this->repository = app($repository);
-        }
-        return $this;
-    }
 
-    public function getRepository(){
-        return $this->repository??$this->repositoryClass?app($this->repositoryClass):null;
-    }
     /**
      * set validator repository
      *
@@ -96,18 +77,43 @@ trait CRUDMethods
      */
     public function setValidatorRepository($validatorRepository)
     {
-        if(is_object($validatorRepository) && ($validatorRepository instanceof BaseRepository || is_a($validatorRepository, BaseRepository::class))){
+        if (is_object($validatorRepository) && ($validatorRepository instanceof BaseRepository || is_a($validatorRepository, BaseRepository::class))) {
             $this->validatorRepository = $validatorRepository;
-        }
-        elseif(is_string($validatorRepository) && class_exists($validatorRepository)){
+        } elseif (is_string($validatorRepository) && class_exists($validatorRepository)) {
             $this->validatorRepository = app($validatorRepository);
         }
         return $this;
     }
 
+    /**
+     * Lấy validator repository
+     * 
+     * Ưu tiên:
+     * 1. validatorRepository (nếu đã set)
+     * 2. repository (nếu có)
+     * 3. repositoryClass (resolve từ container nếu là string hợp lệ)
+     * 4. null
+     * 
+     * @return \One\Core\Repositories\BaseRepository|null
+     */
     public function getValidatorRepository()
     {
-        return $this->validatorRepository??$this->repository??$this->repositoryClass?app($this->repositoryClass):null;
+        // Ưu tiên 1: validatorRepository
+        if ($this->validatorRepository !== null) {
+            return $this->validatorRepository;
+        }
+
+        // Ưu tiên 2: repository
+        if ($this->repository !== null) {
+            return $this->repository;
+        }
+
+        // Ưu tiên 3: repositoryClass (resolve từ container)
+        if ($this->repositoryClass && is_string($this->repositoryClass) && class_exists($this->repositoryClass)) {
+            return app($this->repositoryClass);
+        }
+
+        return null;
     }
 
     /**
@@ -234,4 +240,76 @@ trait CRUDMethods
         return null;
     }
 
+
+    /**
+     * lấy dữ liệu damg5 danh sách
+     * @param Request $request
+     * @param array $args
+     *
+     * @return collection
+     */
+    public function getResults(Request $request, array $args = [])
+    {
+        return $this->repositoryTap(function ($repository) use ($request, $args) {
+            return $repository->getResults($request, $args);
+        }, EmptyCollection::class);
+    }
+
+    public function getDetail(int|array $args = [])
+    {
+        return $this->repositoryTap(function ($repository) use ($args) {
+            return $repository->detail($args);
+        }, EmptyMask::class);
+    }
+
+    public function getTrashedResults(Request $request, array $args = [])
+    {
+        return $this->repositoryTap(function ($repository) use ($request, $args) {
+            return $repository->trashed()->getResults($request, $args);
+        }, EmptyCollection::class);
+    }
+
+    public function moveToTrash(int|array $args = [])
+    {
+        return $this->repositoryTap(function ($repository) use ($args) {
+            return $repository->moveToTrash($args);
+        }, false);
+    }
+    public function restoreFromTrash(int|array $args = [])
+    {
+        return $this->repositoryTap(function ($repository) use ($args) {
+            return $repository->restoreFromTrash($args);
+        }, false);
+    }
+    public function delete(int|array $args = [])
+    {
+        return $this->repositoryTap(function ($repository) use ($args) {
+            return $repository->delete($args);
+        }, false);
+    }
+    public function erase(int|array $args = [])
+    {
+        return $this->repositoryTap(function ($repository) use ($args) {
+            return $repository->erase($args);
+        }, false);
+    }
+
+    public function update(int|array $args = [], array $data = [])
+    {
+        return $this->repositoryTap(function ($repository) use ($args, $data) {
+            return $repository->update($args, $data);
+        }, false);
+    }
+    public function create(array $data = [])
+    {
+        return $this->repositoryTap(function ($repository) use ($data) {
+            return $repository->create($data);
+        }, false);
+    }
+    public function createMany(array $data = [])
+    {
+        return $this->repositoryTap(function ($repository) use ($data) {
+            return $repository->createMany($data);
+        }, false);
+    }
 }

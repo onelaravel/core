@@ -9,7 +9,9 @@ use One\Core\Services\Methods\ModuleMethods;
 
 class Service
 {
-    use EventMethods, MagicMethods, ModuleMethods, SmartInit;
+    use EventMethods, MagicMethods, SmartInit;
+
+
 
     public function __construct()
     {
@@ -17,6 +19,10 @@ class Service
     }
 
 
+    public function initService(){
+        
+
+    }
 
     /**
      * gọi hàm không dược khai báo từ trước

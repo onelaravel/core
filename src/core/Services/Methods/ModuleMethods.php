@@ -4,11 +4,14 @@ namespace One\Core\Services\Methods;
 
 use One\Core\Magic\Arr;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 use One\Core\Html\Menu;
 
 use One\Core\Laravel\Router;
 use One\Core\Masks\EmptyCollection;
+use One\Core\Masks\EmptyMask;
+use One\Core\Repositories\BaseRepository;
 
 /**
  * các thuộc tính và phương thức của form sẽ được triển trong ManagerController
@@ -17,216 +20,114 @@ use One\Core\Masks\EmptyCollection;
 trait ModuleMethods
 {
 
-    /**
-     * @var string $module day là tên module cung la ten thu muc view va ten so it cua bang, thu muc trong asset
-     * override del chinh sua
-     */
-    protected $module = 'test';
-
 
     /**
-     * @var string $moduleName tên của module và cũng là tiêu đề trong form
+     * @var string $repositoryClass
+     * full class name 
      */
-    protected $moduleName = '';
-
-    /**
-     * @var string $routeNamePrefix
-     */
-    protected $routeNamePrefix = '';
-
-    /**
-     * @var string $menuName
-     */
-    protected $menuName = 'menu';
-
-    /**
-     * @var bool $flashMode cho biết có chia chức năng này thành module rieng ko hay sử dụng trung
-     * Chuẩn hóa module thoe mguyen6 mẫu Crazy CMS 
-     */
-    protected $flashMode = true;
-
-    /**
-     * @var string $modulePath
-     */
-    protected $modulePath = '';
-
-    protected $context = '';
-
-
-    protected $mode = 'system';
-
-
-    public function callRepositoryMethod($method, $args = [], $default = null)
-    {
-        if ($this->repository && is_object($this->repository)) {
-            return $this->repository->{$method}(...$args);
-        }
-        if (is_string($default) && class_exists($default)) {
-            return app($default);
-        }
-        return $default;
-    }
-
-    /**
-     * thực hiện một hành dộng với repository bất kể xuất hiện lỗi hay không
-     *
-     * @param callable $callback
-     * @param mixed $default
-     * @return mixed
-     */
-    public function repositoryTap($callback, $default = null){
-        $result = is_string($default) && class_exists($default) ? app($default) : $default;
-        try{
-            if(is_callable($callback) && is_object($this->repository)){
-                $result = $callback($this->repository);
-            }
-        } catch (\Exception $e) {
-        }
-        return $result;
-    }
+    protected $repositoryClass = '';
 
 
     /**
-     * lấy dữ liệu damg5 danh sách
-     * @param Request $request
-     * @param array $args
-     *
-     * @return collection
+     * @var \One\Core\Repositories\BaseRepository $repository
      */
-    public function getResults(Request $request, array $args = [])
-    {
-        return $this->repositoryTap(function($repository) use ($request, $args){
-            return $repository->getResults($request, $args);
-        }, EmptyCollection::class);
-    }
-
+    protected $repository = null;
     /**
      * thiết lập module
      */
     public function initModule()
     {
-        if (!$this->moduleBlade) $this->moduleBlade = $this->module;
-
+        if($this->repositoryClass){
+            $this->setRepositoryClass($this->repositoryClass);
+        }
+        
+        
         if ($this->repository)
             $this->repository->notTrashed();
         
     }
 
-    /**
-     * actice module menu
-     */
-    public function activeMenu($activeKey = null)
-    {
-        Menu::removeActiveKey($this->menuName);
-        Menu::addActiveKey($this->menuName, $activeKey ? $activeKey : $this->module);
-    }
 
-    /**
-     * get route url
-     * @param string $routeName
-     * @param array $params
-     * 
-     * @return string
-     */
-    public function getRouteUrl($routeName = null, array $params = [])
+    public function setRepositoryClass($repositoryClass)
     {
-        if (!is_string($routeName) || !strlen($routeName)) return null;
-        if (Router::getByName($this->routeNamePrefix . $routeName)) {
-            return \route($this->routeNamePrefix . $routeName, $params);
+        if(is_string($repositoryClass) && class_exists($repositoryClass)){
+            $this->repositoryClass = $repositoryClass;
         }
-        return null;
+
+        return $this;
+    }
+
+
+    public function setRepository($repository){
+        if(is_object($repository) && ($repository instanceof BaseRepository || is_a($repository, BaseRepository::class))){
+            $this->repository = $repository;
+        }
+        elseif(is_string($repository) && class_exists($repository)){
+            $this->repository = app($repository);
+        }
+        return $this;
+    }
+
+    public function getRepository(){
+        return $this->repository??$this->repositoryClass?app($this->repositoryClass):null;
     }
 
     /**
-     * get route url
-     * @param string $routeName
-     * @param array $params
+     * Thực hiện một hành động với repository một cách an toàn
      * 
-     * @return Route
+     * Hàm này cho phép thực hiện các thao tác với repository mà không làm gián đoạn
+     * luồng xử lý nếu có lỗi xảy ra. Nếu có lỗi hoặc repository không tồn tại,
+     * sẽ trả về giá trị mặc định.
+     *
+     * @param callable(\One\Core\Repositories\BaseRepository):mixed $callback Callback thực hiện với repository
+     * @param mixed $default Giá trị mặc định trả về khi có lỗi. Có thể là:
+     *                      - Class string: sẽ tự động resolve từ container
+     *                      - Object: trả về object đó
+     *                      - Giá trị khác: trả về giá trị đó
+     * @param bool $logError Có log lỗi ra không (mặc định: true trong debug mode)
+     * @return mixed Kết quả từ callback hoặc giá trị mặc định
      */
-    public function getModuleRoute($routeName = null, array $params = [])
+    public function repositoryTap(callable $callback, mixed $default = null, bool $logError = false): mixed
     {
-        return $this->getRouteUrl($this->module . '.' . $routeName, $params);
-    }
-
-    /**
-     * thêm nút thêm mới
-     * 
-     */
-    public function addHeaderButtons(...$buttons)
-    {
-        $btns = [
-            'create' => [
-                'url' => $this->getModuleRoute('create'),
-                'text' => 'Thêm mới',
-                'icon' => 'plus'
-            ]
-        ];
-        $data = [];
-        if ($buttons) {
-            foreach ($buttons as $i => $button) {
-                if (isset($btns[$button])) {
-                    $data[] = $btns[$button];
-                }
+        
+        // Kiểm tra repository có tồn tại không
+        if (!is_object($this->repository)) {
+            return $this->resolveDefaultValue($default);
+        }
+        try {
+            return $callback($this->repository);
+        } catch (\Throwable $e) {
+            if ($logError) {
+                Log::warning('RepositoryTap error', [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'repository' => get_class($this->repository),
+                ]);
             }
-            // admin_breadcrumbs($data);
+            
+            return $this->resolveDefaultValue($default);
         }
     }
-
-
-
+    
     /**
-     * lấy dữ liệu list
-     * @param Arr $config
+     * Resolve giá trị mặc định từ tham số
      * 
+     * @param mixed $default Giá trị mặc định
+     * @return mixed Giá trị đã được resolve
      */
-    public function getListConfigData()
+    protected function resolveDefaultValue(mixed $default): mixed
     {
-        $data = [];
-        // nếu sử dụng flash mode
-        if ($this->flashMode) {
-            $file = $this->modulePath . '/list';
-            $data = $this->getJsonData($file);
-            if ($data) {
-                $data = $this->checkListExtendsAndInclude($file, $data);
-            }
+        // Nếu là class string và class tồn tại, resolve từ container
+        if (is_string($default) && $default !== '' && class_exists($default)) {
+            return app($default);
         }
-
-        return $data;
+        
+        // Trả về giá trị gốc
+        return $default;
     }
 
-
-    public function checkListExtendsAndInclude($filename, $data)
-    {
-        if (array_key_exists('extends', $data)) {
-            $mergeData = [];
-            $paths = explode('/', $filename);
-            array_pop($paths);
-
-            if (is_string($data['extends']) && strlen($data['extends'])) {
-                $ejPath = $data['extends'];
-                $clonePaths = $paths;
-                if (substr($ejPath, 0, 1) != '/') {
-                    $ExtPaths = explode('/', $ejPath);
-                    foreach ($ExtPaths as $path) {
-                        if ($path == '..') {
-                            array_pop($clonePaths);
-                        } elseif ($path != '.') {
-                            $clonePaths[] = $path;
-                        }
-                    }
-                    $ejPath = implode('/', $clonePaths);
-                } else {
-                    $ejPath = substr($ejPath, 1);
-                }
-                if ($configData = $this->getJsonData($ejPath)) {
-
-                    $mergeData = $this->checkListExtendsAndInclude($ejPath, $configData);
-                }
-            }
-            unset($data['extends']);
-            return Arr::deepMerge($mergeData, $data);
-        }
-        return $data;
-    }
+    
+    
 }

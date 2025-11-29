@@ -118,7 +118,7 @@ trait FileType
      * 
      * @return object Arr|Any
      */
-    function getMimeType($type)
+    public function getMimeType($type)
     {
         $mimes = static::$mimes;
         $s = strtolower($type);

@@ -6,6 +6,14 @@ use One\Core\Magic\Any;
 
 class Filemanager{
     use FileType, DirMethods, FileMethods, ZipMethods, FileConverter;
+    protected static $_filemanager = null;
+    public static function getInstance()
+    {
+        if(!static::$_filemanager){
+            static::$_filemanager = new Filemanager();
+        }
+        return static::$_filemanager;
+    }
 
 
     /**

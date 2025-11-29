@@ -225,6 +225,26 @@ trait CRUDAction
     }
 
     /**
+     * Tạo một lúc nhiều bản ghi (bulk insert)
+     *
+     * @param array $dataList Mảng các mảng dữ liệu
+     * @return int|bool Số bản ghi tạo thành công hoặc false nếu thất bại
+     */
+    public function createMany(array $dataList = [])
+    {
+        if (empty($dataList)) return 0;
+        // Chuẩn hóa data từng bản ghi, nếu cần
+        $escapedDataList = array_map([$this, 'parseData'], $dataList);
+
+        try {
+            $res = $this->_model->insert($escapedDataList);
+            return $res ? count($escapedDataList) : false;
+        } catch (\Exception $e) {
+            $this->crudErrorMessage = $e->getMessage();
+            return false;
+        }
+    }
+    /**
      * cập nhật dử liệu bản ghi
      * @param int|string $id
      * @param array $data
@@ -232,7 +252,7 @@ trait CRUDAction
      */
     public function update($id, array $data = [])
     {
-        if (!$this->find($id)) {
+        if ($this->count(['id' => $id]) == 0) {
             $this->crudErrorMessage = 'Không thể tìm thấy bản ghi có id là ' . $id . ' để cập nhật';
             return false;
         }
