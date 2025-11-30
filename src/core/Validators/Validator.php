@@ -33,10 +33,12 @@ abstract class Validator{
     }
 
     /**
-     * gọi phương thức chưa fuoc759 khai báo
+     * Gọi phương thức chưa được khai báo
+     * 
+     * Magic method để gọi các method từ request object
      *
-     * @param string $method
-     * @param array $params
+     * @param string $method Tên method
+     * @param array $params Tham số truyền vào method
      * @return mixed
      */
     public function __call($method, $params)

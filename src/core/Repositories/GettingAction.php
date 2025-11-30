@@ -147,7 +147,7 @@ trait GettingAction
         if ($this->loadAfter) {
             $this->lazyLoad($collection);
         }
-        $this->fire('beforget', $this, $args, $collection);
+        $this->fire('afterget', $this, $args, $collection);
         return $collection;
     }
 
