@@ -2,6 +2,7 @@
 namespace One\Core\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use One\Core\Engines\ViewContextManager;
 
 class OneServiceProvider extends ServiceProvider
 {
@@ -18,6 +19,13 @@ class OneServiceProvider extends ServiceProvider
         // Nạp file cấu hình steak.php từ src/config vào hệ thống cấu hình Laravel với namespace 'steak'.
         // Nếu không có file cấu hình thì sẽ tự động tạo file cấu hình mặc định.
         $this->mergeConfigFrom(__DIR__ . '/../../config/one.php', 'one');
+
+        // Đăng ký ViewContextManager như singleton
+        // Đảm bảo contexts được giữ lại giữa các requests trong Octane
+        // Contexts có thể được cập nhật động (ví dụ: khi admin đổi theme)
+        $this->app->singleton(ViewContextManager::class, function ($app) {
+            return new ViewContextManager();
+        });
 
         // Đăng ký OctaneServiceProvider nếu Laravel Octane được phát hiện
         // Nếu project có cài Laravel Octane thì tự động đăng ký provider OctaneServiceProvider để hỗ trợ Octane.

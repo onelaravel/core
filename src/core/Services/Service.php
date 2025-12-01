@@ -6,10 +6,12 @@ use One\Core\Events\EventMethods;
 use One\Core\Concerns\MagicMethods;
 use One\Core\Services\Methods\SmartInit;
 use One\Core\Services\Methods\ModuleMethods;
+use One\Core\Services\Methods\OneMacro;
+use One\Core\Services\Methods\AttributeMethods;
 
 class Service
 {
-    use EventMethods, MagicMethods, SmartInit;
+    use EventMethods, MagicMethods, SmartInit;//, OneMacro, AttributeMethods;
 
 
 
@@ -33,6 +35,7 @@ class Service
      */
     public function __call($method, $params)
     {
+
         if (count($params)) {
             if (in_array($method, static::$eventMethods)) {
                 static::callEventMethod($method, $params);
@@ -47,11 +50,17 @@ class Service
                     return static::_dispatchEvent(array_shift($params), ...$params);
                 }
             }
+            // elseif(($result = $this->callMacro($method, $params, static::MACRO_TYPE_NAME)) !== static::NO_MACRO_EXIST) {
+            //     return $result;
+            // }
         } elseif ($this->_funcExists($method)) {
             $this->_nonStaticCall($method, $params);
         } elseif (substr($method, 0, 4) == 'emit' && strlen($event = substr($method, 4)) > 0 && (ctype_upper(substr($event, 0, 1)))) {
             return static::_dispatchEvent($event, ...$params);
-        }
+        } 
+        // elseif(($result = $this->callMacro($method, $params, static::MACRO_TYPE_NAME)) !== static::NO_MACRO_EXIST) {
+        //     return $result;
+        // }
         return $this;
     }
     /**
@@ -69,26 +78,6 @@ class Service
             return static::_staticCall($method, $parameters);
         }
         return static::_staticCall($method, $parameters);
-    }
-
-    public function __get($name)
-    {
-        return null;
-    }
-
-    public function __set($name, $value)
-    {
-        return null;
-    }
-
-    public function __isset($name)
-    {
-        return false;
-    }
-
-    public function __unset($name)
-    {
-        return null;
     }
 }
 
