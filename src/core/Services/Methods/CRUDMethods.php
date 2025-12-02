@@ -165,9 +165,9 @@ trait CRUDMethods
                 $c = 'One\Core\Validators\ExampleValidator';
             }
             $rc = new ReflectionClass($c);
-            return $rc->newInstanceArgs([$request, $this]);
+            return $rc->newInstanceArgs([$request, $this->getValidatorRepository()]);
         }
-        return new ExampleValidator($request, $this);
+        return new ExampleValidator($request, $this->getValidatorRepository());
     }
 
     /**
