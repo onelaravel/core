@@ -1,6 +1,6 @@
 <?php
 
-namespace One\Core\Services\Methods;
+namespace One\Core\Support\Methods;
 
 use One\Core\Magic\Arr;
 use Illuminate\Http\Request;

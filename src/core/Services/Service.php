@@ -4,10 +4,10 @@ namespace One\Core\Services;
 
 use One\Core\Events\EventMethods;
 use One\Core\Concerns\MagicMethods;
-use One\Core\Services\Methods\SmartInit;
-use One\Core\Services\Methods\ModuleMethods;
-use One\Core\Services\Methods\OneMacro;
-use One\Core\Services\Methods\AttributeMethods;
+use One\Core\Support\Methods\SmartInit;
+use One\Core\Support\Methods\ModuleMethods;
+use One\Core\Support\Methods\OneMacro;
+use One\Core\Support\Methods\AttributeMethods;
 
 class Service
 {

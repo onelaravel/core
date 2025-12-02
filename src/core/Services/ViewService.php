@@ -2,8 +2,8 @@
 
 namespace One\Core\Services;
 
-use One\Core\Services\Methods\ViewMethods;
-use One\Core\Services\Methods\CacheMethods;
+use One\Core\Support\Methods\ViewMethods;
+use One\Core\Support\Methods\CacheMethods;
 
 class ViewService extends Service
 {

@@ -2,10 +2,9 @@
 
 namespace One\Core\Services;
 
-use One\Core\Services\Methods\ModuleMethods;
-use One\Core\Services\Methods\CRUDMethods;
-use One\Core\Services\Methods\CacheMethods;
-use One\Core\Services\Methods\ResponseMethods;
+use One\Core\Support\Methods\ModuleMethods;
+use One\Core\Support\Methods\CRUDMethods;
+use One\Core\Support\Methods\CacheMethods;
 
 class ModuleService extends Service
 {

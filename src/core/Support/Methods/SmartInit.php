@@ -1,6 +1,6 @@
 <?php
 
-namespace One\Core\Services\Methods;
+namespace One\Core\Support\Methods;
 
 trait SmartInit
 {

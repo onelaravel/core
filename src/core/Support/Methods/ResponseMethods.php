@@ -1,6 +1,6 @@
 <?php
 
-namespace One\Core\Services\Methods;
+namespace One\Core\Support\Methods;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
