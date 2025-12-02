@@ -131,27 +131,6 @@ trait ResponseMethods
         
         return response()->json($responseData, $status, $mergedHeaders, $jsonOptions);
     }
-
-    public function json($data = [], int $status = 200, array $headers = [], int $jsonOptions = JSON_UNESCAPED_UNICODE)
-    {
-        return response()->json($data, $status, $headers, $jsonOptions);
-    }
-
-    public function jsonError($message = '', int $status = 400, array $headers = [], int $jsonOptions = JSON_UNESCAPED_UNICODE)
-    {
-        return response()->json(['error' => $message], $status, $headers, $jsonOptions);
-    }
-
-    public function jsonErrorDetail($message = '', $errorDetail = [], int $status = 400, array $headers = [], int $jsonOptions = JSON_UNESCAPED_UNICODE)
-    {
-        return response()->json(['message' => $message, 'error_detail' => $errorDetail], $status, $headers, $jsonOptions);
-    }
-
-    public function jsonSuccess($message = '', int $status = 200, array $headers = [], int $jsonOptions = JSON_UNESCAPED_UNICODE)
-    {
-        return response()->json(['success' => $message], $status, $headers, $jsonOptions);
-    }
-    
     /**
      * Kiểm tra request có muốn nhận JSON response không
      * 
