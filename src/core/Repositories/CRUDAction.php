@@ -11,8 +11,7 @@ use One\Core\Validators\Validator;
 use ReflectionClass;
 
 use Illuminate\Http\Request;
-
-
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -27,7 +26,7 @@ use Throwable;
  */
 trait CRUDAction
 {
-   
+
     /**
      * app validator namespace
      *
@@ -49,14 +48,17 @@ trait CRUDAction
 
     protected $throwExceptionEnabled = true;
 
-    public function disableThrowException(){
+    public function disableThrowException()
+    {
         $this->throwExceptionEnabled = false;
     }
-    public function enableThrowException(){
+    public function enableThrowException()
+    {
         $this->throwExceptionEnabled = false;
     }
 
-    public function getCrudErrorMessage(){
+    public function getCrudErrorMessage()
+    {
         return $this->crudErrorMessage;
     }
 
@@ -65,7 +67,8 @@ trait CRUDAction
      *
      * @return Throwable
      */
-    public function getCrudException(){
+    public function getCrudException()
+    {
         return $this->crudException;
     }
 
@@ -143,15 +146,15 @@ trait CRUDAction
         $model->fill($data);
         $this->checkModelUuid($model);
         // dd($model);
+        DB::beginTransaction();
         try {
             $model->save();
-            
+            DB::commit();
         } catch (\Throwable $th) {
-            if($this->throwExceptionEnabled){
-                throw $th;    
+            DB::rollBack();
+            if ($this->throwExceptionEnabled) {
+                throw $th;
             }
-            
-            //throw $th;
             $this->crudErrorMessage = $th->getMessage();
             $this->crudException = $th;
             return false;
@@ -236,11 +239,18 @@ trait CRUDAction
         // Chuẩn hóa data từng bản ghi, nếu cần
         $escapedDataList = array_map([$this, 'parseData'], $dataList);
 
+        DB::beginTransaction();
         try {
             $res = $this->_model->insert($escapedDataList);
+            DB::commit();
             return $res ? count($escapedDataList) : false;
-        } catch (\Exception $e) {
-            $this->crudErrorMessage = $e->getMessage();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            if ($this->throwExceptionEnabled) {
+                throw $th;
+            }
+            $this->crudErrorMessage = $th->getMessage();
+            $this->crudException = $th;
             return false;
         }
     }
@@ -262,7 +272,7 @@ trait CRUDAction
             // $this->afterUpdate($model);
             return $model;
         }
-        $this->crudErrorMessage = 'Không thể cập nhật bản ghi có id là '.$id.' (' . $this->crudErrorMessage . ')';
+        $this->crudErrorMessage = 'Không thể cập nhật bản ghi có id là ' . $id . ' (' . $this->crudErrorMessage . ')';
         return false;
     }
 
@@ -314,12 +324,26 @@ trait CRUDAction
      */
     protected function deleteByModel($model)
     {
-        if(!$model->canDelete()) return false;
+        if (!$model->canDelete()) return false;
         $this->fire('beforedelete', $this, $model->id, $model);
         $this->fire('deleting', $this, $model->id, $model);
-        $stt = $model->delete();
-        $this->fire('afterdelete', $this, $model->id, $model);
-        $this->fire('deleted', $this, $model->id, $model);
+        $stt = false;
+        DB::beginTransaction();
+        try {
+            $stt = $model->delete();
+            DB::commit();
+
+            $this->fire('afterdelete', $this, $model->id, $model);
+            $this->fire('deleted', $this, $model->id, $model);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            if ($this->throwExceptionEnabled) {
+                throw $th;
+            }
+            $this->crudErrorMessage = $th->getMessage();
+            $this->crudException = $th;
+            return false;
+        }
         return $stt;
     }
 
@@ -336,7 +360,7 @@ trait CRUDAction
             // 
             if (count($this->params) || count($this->actions)) {
                 $stt = false;
-                if($rs = $this->get()){
+                if ($rs = $this->get()) {
                     foreach ($rs as $item) {
                         $stt = $this->deleteByModel($item);
                     }
@@ -348,12 +372,12 @@ trait CRUDAction
         // nếu xóa nhiều
         if (is_array($id)) {
             $ids = [];
-            $args = Arr::isNumericKeys($id)?$id:[$this->_primaryKeyName => $id];
+            $args = Arr::isNumericKeys($id) ? $id : [$this->_primaryKeyName => $id];
             $list = $this->get($args);
             if (count($list)) {
                 foreach ($list as $item) {
                     $id0 = $item->{$this->_primaryKeyName};
-                    if($this->deleteByModel($item)){
+                    if ($this->deleteByModel($item)) {
                         $ids[] = $id0;
                     }
                 }
@@ -378,10 +402,42 @@ trait CRUDAction
     final public function forceDelete($id = null)
     {
         if (!$id) {
-            if(count($this->params) || count($this->actions)){
+            if (count($this->params) || count($this->actions)) {
                 $ids = [];
                 $list = $this->get();
                 if (count($list)) {
+                    DB::beginTransaction();
+                    try {
+                        $this->fire('beforeForceDelete', $this, $id, $list);
+                        foreach ($list as $item) {
+                            if (!$item->canForceDelete()) continue;
+                            $ids[] = $item->{$this->_primaryKeyName};
+                            $item->forceDelete();
+                        }
+                        $this->fire('afterForceDelete', $this, $ids, $list);
+                        DB::commit();
+                    } catch (\Throwable $th) {
+                        DB::rollBack();
+                        if ($this->throwExceptionEnabled) {
+                            throw $th;
+                        }
+                        $this->crudErrorMessage = $th->getMessage();
+                        $this->crudException = $th;
+                        return $ids;
+                    }
+                }
+                return $ids;
+            }
+            return false;
+        }
+        // nếu xóa nhiều
+        if (is_array($id)) {
+            $ids = [];
+            $args = Arr::isNumericKeys($id) ? $id : [$this->_primaryKeyName => $id];
+            $list = $this->get($args);
+            if (count($list)) {
+                DB::beginTransaction();
+                try {
                     $this->fire('beforeForceDelete', $this, $id, $list);
                     foreach ($list as $item) {
                         if (!$item->canForceDelete()) continue;
@@ -389,25 +445,18 @@ trait CRUDAction
                         $item->forceDelete();
                     }
                     $this->fire('afterForceDelete', $this, $ids, $list);
+
+                    DB::commit();
+                    return $ids;
+                } catch (\Throwable $th) {
+                    DB::rollBack();
+                    if ($this->throwExceptionEnabled) {
+                        throw $th;
+                    }
+                    $this->crudErrorMessage = $th->getMessage();
+                    $this->crudException = $th;
+                    return false;
                 }
-                return $ids;
-            }
-            return false;
-            
-        }
-        // nếu xóa nhiều
-        if (is_array($id)) {
-            $ids = [];
-            $args = Arr::isNumericKeys($id)?$id:[$this->_primaryKeyName => $id];
-            $list = $this->get($args);
-            if (count($list)) {
-                $this->fire('beforeForceDelete', $this, $id, $list);
-                foreach ($list as $item) {
-                    if (!$item->canForceDelete()) continue;
-                    $ids[] = $item->{$this->_primaryKeyName};
-                    $item->forceDelete();
-                }
-                $this->fire('afterForceDelete', $this, $ids, $list);
             }
             return $ids;
         }
@@ -415,10 +464,22 @@ trait CRUDAction
         if ($result) {
 
             if ($result->canForceDelete()) {
-                $this->fire('beforeForceDelete', $this, $id, $result);
-                $result->forceDelete();
-                $this->fire('afterForceDelete', $this, $id, $result);
-                return true;
+                DB::beginTransaction();
+                try {
+                    $this->fire('beforeForceDelete', $this, $id, $result);
+                    $result->forceDelete();
+                    $this->fire('afterForceDelete', $this, $id, $result);
+                    DB::commit();
+                    return true;
+                } catch (\Throwable $th) {
+                    DB::rollBack();
+                    if ($this->throwExceptionEnabled) {
+                        throw $th;
+                    }
+                    $this->crudErrorMessage = $th->getMessage();
+                    $this->crudException = $th;
+                    return false;
+                }
             }
         }
 
@@ -437,10 +498,20 @@ trait CRUDAction
     {
         $result = $this->find($id);
         if ($result && $result->canMoveToTrash()) {
-            $this->fire('beforeMoveToTrash', $this, $id, $result);
-            if(!($rs = $result->moveToTrash())) return false;
-            $this->fire('afterMoveToTrash', $this, $id, $result);
-            return $rs;
+            DB::beginTransaction();
+            try {
+                $this->fire('beforeMoveToTrash', $this, $id, $result);
+                $rs = $result->moveToTrash();
+                if(!$rs){
+                    DB::rollBack();
+                    return false;
+                }
+                DB::commit();
+                $this->fire('afterMoveToTrash', $this, $id, $result);
+                return $rs;
+            } catch (\Throwable $th) {
+                DB::rollBack();
+            }
         }
 
         return false;
@@ -457,10 +528,20 @@ trait CRUDAction
     {
         $result = $this->find($id);
         if ($result && $result->canMoveToTrash()) {
-            $this->fire('beforeMoveToTrash', $this, $id, $result);
-            if(!($rs = $result->moveToTrash())) return false;
-            $this->fire('afterMoveToTrash', $this, $id, $result);
-            return $rs;
+            DB::beginTransaction();
+            try {
+                $this->fire('beforeMoveToTrash', $this, $id, $result);
+                $rs = $result->moveToTrash();
+                if(!$rs){
+                    DB::rollBack();
+                    return false;
+                }
+                DB::commit();
+                $this->fire('afterMoveToTrash', $this, $id, $result);
+                return $rs;
+            } catch (\Throwable $th) {
+                DB::rollBack();
+            }
         }
 
         return false;
@@ -474,10 +555,26 @@ trait CRUDAction
     {
         $result = $this->find($id);
         if ($result) {
-            $this->fire('beforerestore', $this, $id, $result);
-            if(!($rs = $result->restore())) return false;
-            $this->fire('afterrestore', $this, $id, $result);
-            return $rs;
+            DB::beginTransaction();
+            try {
+                $this->fire('beforeRestore', $this, $id, $result);
+                $rs = $result->restore();
+                if(!$rs){
+                    DB::rollBack();
+                    return false;
+                }
+                $this->fire('afterRestore', $this, $id, $result);
+                DB::commit();
+                return $rs;
+            } catch (\Throwable $th) {
+                DB::rollBack();    
+                if($this->throwExceptionEnabled){
+                    throw $th;
+                }
+                $this->crudErrorMessage = $th->getMessage();
+                $this->crudException = $th;
+                return false;
+            }
         }
 
         return false;
@@ -491,7 +588,21 @@ trait CRUDAction
     {
         $result = $this->find($id);
         if ($result && $result->canErase()) {
-            return $result->erase();
+            DB::beginTransaction();
+            try {
+                $this->fire('beforeErase', $this, $id, $result);
+                $rs = $result->erase();
+                DB::commit();
+                return $rs;
+            } catch (\Throwable $th) {
+                DB::rollBack();
+                if($this->throwExceptionEnabled){
+                    throw $th;
+                }
+                $this->crudErrorMessage = $th->getMessage();
+                $this->crudException = $th;
+                return false;
+            }
         }
 
         return false;

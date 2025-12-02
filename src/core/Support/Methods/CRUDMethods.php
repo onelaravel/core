@@ -60,7 +60,7 @@ trait CRUDMethods
     protected $validatorRepository = null;
 
 
-
+    
 
     public function initCRUD()
     {
