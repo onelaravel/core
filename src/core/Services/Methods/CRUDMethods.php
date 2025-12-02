@@ -147,7 +147,7 @@ trait CRUDMethods
      * lay doi tuong validator
      * @param Request $request
      * @param string $validatorClass
-     * @return Validator
+     * @return \One\Core\Validators\Validator
      */
     public function getValidator(Request $request, $validatorClass = null)
     {
@@ -176,7 +176,7 @@ trait CRUDMethods
      * lay doi tuong validator
      * @param Request $request
      * @param string $validatorClass
-     * @return Validator
+     * @return \One\Core\Validators\Validator
      */
     public function validator(Request $request, $validatorClass = null)
     {
