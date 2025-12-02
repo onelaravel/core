@@ -8,6 +8,7 @@ use One\Core\Masks\EmptyMask;
 use ReflectionClass;
 use One\Core\Validators\ExampleValidator;
 use One\Core\Repositories\BaseRepository;
+use One\Core\Validators\Validator;
 
 /**
  * @method \One\Core\Repositories\BaseRepository getRepository()
@@ -146,7 +147,7 @@ trait CRUDMethods
      * lay doi tuong validator
      * @param Request $request
      * @param string $validatorClass
-     * @return ExampleValidator
+     * @return Validator
      */
     public function getValidator(Request $request, $validatorClass = null)
     {
@@ -173,6 +174,8 @@ trait CRUDMethods
     /**
      *
      * lay doi tuong validator
+     * @param Request $request
+     * @param string $validatorClass
      * @return Validator
      */
     public function validator(Request $request, $validatorClass = null)
