@@ -16,8 +16,8 @@ Trait `ResponseMethods` giúp tự động quyết định trả về **View** h
 namespace App\Services;
 
 use One\Core\Services\ModuleService;
-use One\Core\Services\Methods\ResponseMethods;
-use One\Core\Services\Methods\ViewMethods; // Optional - nếu cần render view
+use One\Core\Support\Methods\ResponseMethods;
+use One\Core\Support\Methods\ViewMethods; // Optional - nếu cần render view
 
 class UserService extends ModuleService
 {
@@ -26,7 +26,7 @@ class UserService extends ModuleService
     public function initUser()
     {
         $this->setRepositoryClass(UserRepository::class);
-        $this->viewInit(); // Nếu dùng ViewMethods
+        $this->initView(); // Nếu dùng ViewMethods
     }
 }
 ```
@@ -208,8 +208,8 @@ namespace App\Services;
 
 use Illuminate\Http\Request;
 use One\Core\Services\ModuleService;
-use One\Core\Services\Methods\ResponseMethods;
-use One\Core\Services\Methods\ViewMethods;
+use One\Core\Support\Methods\ResponseMethods;
+use One\Core\Support\Methods\ViewMethods;
 
 class UserService extends ModuleService
 {
@@ -218,7 +218,7 @@ class UserService extends ModuleService
     public function initUser()
     {
         $this->setRepositoryClass(UserRepository::class);
-        $this->viewInit();
+        $this->initView();
         $this->module = 'users';
         $this->moduleName = 'Người dùng';
     }
@@ -421,7 +421,7 @@ class UserService extends ModuleService
     public function initUser()
     {
         $this->setRepositoryClass(UserRepository::class);
-        $this->viewInit(); // Quan trọng!
+        $this->initView(); // Quan trọng!
     }
     
     public function getUserList(Request $request)
@@ -530,11 +530,11 @@ public function getUserList(Request $request)
 
 ### **Vấn đề: View không render đúng**
 
-**Nguyên nhân:** Chưa gọi `viewInit()` hoặc chưa dùng ViewMethods
+**Nguyên nhân:** Chưa gọi `initView()` hoặc chưa dùng ViewMethods
 **Giải pháp:** 
 ```php
 use ViewMethods;
-$this->viewInit();
+$this->initView();
 ```
 
 ---

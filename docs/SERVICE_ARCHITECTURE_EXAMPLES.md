@@ -77,6 +77,8 @@ class UserController extends Controller
 
 ```php
 // UserService.php
+use One\Core\Support\Methods\ViewMethods;
+
 class UserService extends ModuleService
 {
     use ViewMethods; // Thêm view methods
@@ -84,7 +86,7 @@ class UserService extends ModuleService
     public function initUser()
     {
         $this->setRepositoryClass(UserRepository::class);
-        $this->viewInit(); // Init view
+        $this->initView(); // Init view
     }
     
     // Get data
@@ -275,6 +277,9 @@ class ResponseService
 
 ```php
 // UserService.php
+use One\Core\Support\Methods\ViewMethods;
+use One\Core\Support\Methods\CacheMethods;
+
 class UserService extends ModuleService
 {
     use ViewMethods, CacheMethods;
@@ -286,7 +291,7 @@ class UserService extends ModuleService
     public function initUser()
     {
         $this->setRepositoryClass(UserRepository::class);
-        $this->viewInit();
+        $this->initView();
         $this->setCacheTime(60);
         $this->cacheKey = 'users';
     }

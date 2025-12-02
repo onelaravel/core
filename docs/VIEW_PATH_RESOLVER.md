@@ -33,7 +33,7 @@ $resolver = new ViewPathResolver([
 `ViewMethods` trait đã được cập nhật để hỗ trợ `ViewPathResolver`:
 
 ```php
-use One\Core\Services\Methods\ViewMethods;
+use One\Core\Support\Methods\ViewMethods;
 
 class MyService
 {

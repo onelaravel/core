@@ -10,8 +10,8 @@ namespace App\Services\Examples;
 
 use Illuminate\Http\Request;
 use One\Core\Services\ModuleService;
-use One\Core\Services\Methods\ResponseMethods;
-use One\Core\Services\Methods\ViewMethods;
+use One\Core\Support\Methods\ResponseMethods;
+use One\Core\Support\Methods\ViewMethods;
 
 // ============================================
 // VÍ DỤ 1: Service Cơ Bản
@@ -24,7 +24,7 @@ class UserServiceExample1 extends ModuleService
     public function initUser()
     {
         $this->setRepositoryClass(UserRepository::class);
-        $this->viewInit();
+        $this->initView();
         $this->module = 'users';
         $this->moduleName = 'Người dùng';
     }
@@ -210,7 +210,7 @@ class UserServiceExample6 extends ModuleService
     public function initUser()
     {
         $this->setRepositoryClass(UserRepository::class);
-        $this->viewInit();
+        $this->initView();
         $this->module = 'users';
         $this->moduleName = 'Người dùng';
     }

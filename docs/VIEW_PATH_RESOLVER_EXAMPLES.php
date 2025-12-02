@@ -8,7 +8,7 @@
 
 namespace Examples;
 
-use One\Core\Services\Methods\ViewMethods;
+use One\Core\Support\Methods\ViewMethods;
 use One\Core\Engines\ViewPathResolver;
 
 // ============================================

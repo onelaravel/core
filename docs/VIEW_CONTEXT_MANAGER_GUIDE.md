@@ -284,7 +284,7 @@ class AppServiceProvider extends ServiceProvider
 namespace App\Services;
 
 use One\Core\Services\Service;
-use One\Core\Services\Methods\ViewMethods;
+use One\Core\Support\Methods\ViewMethods;
 
 class UserService extends Service
 {

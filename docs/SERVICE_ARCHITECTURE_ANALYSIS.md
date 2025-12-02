@@ -20,13 +20,13 @@ Service (Base)
 └── SmartInit (auto init)
 
 ViewService extends Service
-├── ViewMethods (render views)
-└── CacheMethods (caching)
+├── ViewMethods (Support\Methods\ViewMethods - render views)
+└── CacheMethods (Support\Methods\CacheMethods - caching)
 
 ModuleService extends Service
-├── ModuleMethods (repository operations)
-├── CRUDMethods (CRUD + validation)
-└── CacheMethods (caching)
+├── ModuleMethods (Support\Methods\ModuleMethods - repository operations)
+├── CRUDMethods (Support\Methods\CRUDMethods - CRUD + validation)
+└── CacheMethods (Support\Methods\CacheMethods - caching)
 
 ThemeService extends Service
 └── (theme handling)
@@ -458,6 +458,8 @@ class UserService extends ModuleService
 ### **Phase 2: Enhance Main Service**
 
 ```php
+use One\Core\Support\Methods\ViewMethods;
+
 class UserService extends ModuleService
 {
     // 1. Repository đã có sẵn qua ModuleMethods
@@ -551,6 +553,8 @@ class ResponseService
 ### **UserService - Full Example**
 
 ```php
+use One\Core\Support\Methods\ViewMethods;
+
 class UserService extends ModuleService
 {
     use ViewMethods; // Optional - chỉ khi cần render
