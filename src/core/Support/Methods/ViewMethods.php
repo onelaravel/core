@@ -42,6 +42,11 @@ trait ViewMethods
         return App::make(ViewContextManager::class);
     }
 
+    protected function getModuleActionKey(string $action = ''): string
+    {
+        return $this->context .($this->module? '.' . $this->module: '') . ($action?'.'.$action:'');
+    }
+
     /**
      * Render view
      * 
@@ -60,16 +65,9 @@ trait ViewMethods
         // Merge với module info
         $mergedData = array_merge([
             'module_slug' => $this->module,
-            'module_name' => $this->moduleName,
-            'route_name_prefix' => $this->routeNamePrefix ?? '',
+            '__route__' => $this->getModuleActionKey(),
             'package' => $this->package ?? null,
         ], $data);
-
-        // Nếu có module và module không rỗng, render module view
-        // Module mặc định 'test' được coi là không có module
-        if (!empty($this->module) && $this->module !== 'test') {
-            return $contextManager->renderModule($context, $this->module, $blade, $mergedData);
-        }
 
         // Nếu không có module, render từ base: context.blade
         // Ví dụ: context='web', blade='abc' => 'web.abc'
@@ -90,7 +88,7 @@ trait ViewMethods
 
         $mergedData = array_merge([
             'module_slug' => $this->module,
-            'module_name' => $this->moduleName,
+            '__route__' => $this->getModuleActionKey(),
         ], $data);
 
         return $contextManager->renderModule($context, $this->module, $blade, $mergedData);
@@ -110,7 +108,7 @@ trait ViewMethods
 
         $mergedData = array_merge([
             'module_slug' => $this->module,
-            'module_name' => $this->moduleName,
+            '__route__' => $this->getModuleActionKey(),
         ], $data);
 
         return $contextManager->renderPage($context, $this->module, $page, $mergedData);
