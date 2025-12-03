@@ -364,6 +364,35 @@ class ViewContextManager implements OctaneCompatible
     }
 
     /**
+     * Resolve view path từ alias
+     * 
+     * @param string $context Tên context
+     * @param string $module Tên module (có thể rỗng để render từ base)
+     * @param string $blade Tên blade
+     * @return string View path đã được resolve
+     * @example @module.index => {modulePath}index
+     * @example @page.about => {pagePath}about
+     * @example @base.home => {basePath}home
+     * @example @component.button => {componentPath}button
+     * @example @layout.main => {layoutPath}main
+     * @example @template.default => {templatePath}default
+     * @example @pagination.default => {paginationPath}default
+     * @example @pagination.default => {paginationPath}default
+     */
+    public function resolvePathByAlias(string $context, string $module, string $blade): string
+    {
+        if(preg_match('/^@([a-zA-Z0-9_]+)([\.\:])(.+)$/i', $blade, $matches)) {
+            $alias = strtolower($matches[1]);
+            $separator = $matches[2];
+            $remaining = $matches[3];
+
+            return $this->resolvePath($context, $module, $remaining, $alias);
+        }
+
+        return $this->resolvePath($context, $module, $blade, '');
+    }
+
+    /**
      * Share data cho một context
      * 
      * Data được share sẽ được merge vào mọi view của context đó

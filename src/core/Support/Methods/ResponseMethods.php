@@ -68,19 +68,14 @@ trait ResponseMethods
             $config = $this->getBladeViewRenderConfig($bladePath);
             $bladePath = $config['view'];
             $method = $config['method'];
-            if($method == 'renderModule') {
-                return $this->renderModule($bladePath, $data);
+            if(method_exists($this, $method)) {
+                return $this->$method($bladePath, $data);
             }
-            elseif($method == 'renderPage') {   
-                return $this->renderPage($bladePath, $data);
-            }
-            else {
-                return $this->render($bladePath, $data);
-            }
+            return $this->render($bladePath, $data);
         }
         
         // Fallback: sử dụng view() helper
-        return view($bladePath, $data);
+        return $this->render($bladePath, $data);
     }
     
     /**
@@ -103,12 +98,8 @@ trait ResponseMethods
         
         if ($bladePath) {
             try {
-                // Render view thành HTML
-                if(method_exists($this, 'parseBladePath')) {
-                    $bladePath = $this->parseBladePath($bladePath);
-                }
-                elseif(method_exists($this, 'getViewPath')) {
-                    $bladePath = $this->getViewPath($bladePath);
+                if(method_exists($this, 'resolvePathByAlias')) {
+                    $bladePath = $this->resolvePathByAlias($bladePath);
                 }
                 
                 // Thêm view HTML vào response

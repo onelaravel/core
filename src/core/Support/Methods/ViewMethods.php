@@ -158,4 +158,48 @@ trait ViewMethods
 
         return $contextManager->renderTemplate($context, $template, $data);
     }
+
+    /**
+     * Resolve view path từ alias
+     * 
+     * @param string $blade Tên blade
+     * @return string View path đã được resolve
+     */
+    public function resolvePathByAlias(string $blade): string{
+        $contextManager = $this->getViewContextManager();
+        return $contextManager->resolvePathByAlias($this->context, $this->module, $blade);
+    }
+
+    public function getBladeViewRenderConfig(string $blade): array{
+        if(preg_match('/^@([a-zA-Z0-9_]+)([\.\:])(.+)$/i', $blade, $matches)) {
+            $alias = strtolower($matches[1]);
+            $separator = $matches[2];
+            $remaining = $matches[3];
+            $method = 'render';
+            if($alias == 'module') {
+                $method = 'renderModule';
+            }
+            elseif($alias == 'page') {
+                $method = 'renderPage';
+            }
+            elseif($alias == 'component') {
+                $method = 'renderComponent';
+            }
+            elseif($alias == 'layout') {
+                $method = 'renderLayout';
+            }
+            elseif($alias == 'template') {
+                $method = 'renderTemplate';
+            }
+
+            return [
+                'method' => $method,
+                'view' => $remaining,
+            ];
+        }
+        return [
+            'method' => 'render',
+            'view' => $blade,
+        ];
+    }
 }
