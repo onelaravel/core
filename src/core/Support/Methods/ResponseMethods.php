@@ -44,12 +44,11 @@ trait ResponseMethods
 
         // Kiểm tra Accept header (Laravel built-in method)
         $wantsJson = (
-            $request->wantsJson() || 
             $this->wantsJsonResponse($request) || 
             !$bladePath || $forceJson
         ); 
         if ($wantsJson) {
-            return $this->jsonResponse($data, $status, $headers, $jsonOptions, $includeView && $bladePath ? $bladePath : null);
+            return $this->jsonResponse($data, $status, $headers, $jsonOptions, $bladePath);
         }
         
         return $this->renderResponse($bladePath, $data);
