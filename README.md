@@ -44,6 +44,15 @@
 - **CRUD Actions**: CRUD operations tự động
 - **Filter Actions**: Advanced filtering và searching
 - **Cache Tasks**: Cache management cho repositories
+- **RepositoryTap**: Safe repository operations với error handling
+
+### 🎨 Service Layer
+- **ModuleService**: Service cho modules với CRUD operations
+- **ViewService**: Service cho view rendering với ViewContextManager
+- **ResponseMethods**: Tự động trả về View/JSON dựa trên headers
+- **ViewMethods**: View rendering với context management
+- **ModuleMethods**: Repository operations với error handling
+- **CRUDMethods**: CRUD operations với validation
 
 ### 🔐 Security & Validation
 - **Validators**: Validation system mở rộng
@@ -185,6 +194,45 @@ class UserRepository extends BaseRepository
     }
 }
 ```
+
+### Service Layer với Auto View/JSON Response
+
+```php
+use One\Core\Services\ModuleService;
+use One\Core\Support\Methods\ViewMethods;
+use One\Core\Support\Methods\ResponseMethods;
+use Illuminate\Http\Request;
+
+class UserService extends ModuleService
+{
+    use ViewMethods, ResponseMethods;
+    
+    protected $context = 'web';
+    protected $module = 'users';
+    
+    public function initUser()
+    {
+        $this->setRepositoryClass(UserRepository::class);
+        $this->initView();
+    }
+    
+    public function getUserList(Request $request)
+    {
+        $users = $this->repository->getResults($request);
+        
+        // Tự động trả về view hoặc JSON dựa trên header
+        return $this->response($request, [
+            'users' => $users,
+            'title' => 'Danh sách người dùng'
+        ], 'users.index');
+    }
+}
+```
+
+**Request Headers:**
+- `x-one-response: json` → Trả về JSON
+- `Accept: application/json` → Trả về JSON
+- Không có header → Trả về View
 
 ### Event System
 
@@ -437,7 +485,7 @@ src/
 │   ├── Console/          # Console commands
 │   ├── Crawlers/         # Web crawling utilities
 │   ├── Database/         # Database utilities
-│   ├── Engines/          # Core engines (ShortCode, Cache, etc.)
+│   ├── Engines/          # Core engines (ShortCode, Cache, ViewContextManager, etc.)
 │   ├── Events/           # Event system (EventMethods, EventDispatcher)
 │   ├── Files/            # File management system
 │   ├── Html/             # HTML builders và components
@@ -452,7 +500,8 @@ src/
 │   ├── Providers/        # Service providers
 │   ├── Queues/           # Queue management
 │   ├── Repositories/     # Repository pattern implementation
-│   ├── Services/         # Service classes
+│   ├── Services/         # Service classes (ModuleService, ViewService, etc.)
+│   ├── Support/Methods/  # Support methods (ViewMethods, ResponseMethods, etc.)
 │   ├── System/           # System utilities
 │   └── Validators/       # Validation system
 ├── helpers/              # Helper functions
@@ -470,6 +519,21 @@ src/
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📚 Documentation
+
+### Tài Liệu Chi Tiết
+
+- **[Quick Start Guide](./docs/QUICK_START_GUIDE.md)** - Hướng dẫn bắt đầu nhanh
+- **[Recent Updates Guide](./docs/RECENT_UPDATES_GUIDE.md)** - Các thay đổi gần đây
+- **[Structure Overview](./docs/STRUCTURE_OVERVIEW.md)** - Tổng quan cấu trúc
+- **[Response Methods Usage](./docs/RESPONSE_METHODS_USAGE.md)** - Hướng dẫn ResponseMethods
+- **[View Context Manager Guide](./docs/VIEW_CONTEXT_MANAGER_GUIDE.md)** - Hướng dẫn ViewContextManager
+- **[Service Architecture Analysis](./docs/SERVICE_ARCHITECTURE_ANALYSIS.md)** - Phân tích kiến trúc Service
+
+### Tài Liệu Khác
+
+Xem thêm trong thư mục [`docs/`](./docs/) để biết thêm chi tiết.
 
 ## 🆘 Support
 
