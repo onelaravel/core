@@ -138,14 +138,14 @@ trait ResponseMethods
             return true;
         }
         
-        if(method_exists($request, 'accepts') && $request->accepts('application/json')) {
-            return true;
-        }
-        // Kiểm tra Accept header thủ công (case-insensitive)
-        $accept = $this->getHeaderCaseInsensitive($request, 'Accept', '');
-        if ($accept && str_contains(strtolower($accept), 'application/json')) {
-            return true;
-        }
+        // if(method_exists($request, 'accepts') && $request->accepts('application/json')) {
+        //     return true;
+        // }
+        // // Kiểm tra Accept header thủ công (case-insensitive)
+        // $accept = $this->getHeaderCaseInsensitive($request, 'Accept', '');
+        // if ($accept && str_contains(strtolower($accept), 'application/json')) {
+        //     return true;
+        // }
         
         return false;
     }

@@ -382,15 +382,18 @@ class ViewContextManager implements OctaneCompatible
     public function resolvePathByAlias(string $context, string $module, string $blade): string
     {
         if(preg_match('/^@([a-zA-Z0-9_]+)([\.\:])(.+)$/i', $blade, $matches)) {
-            $alias = strtolower($matches[1]);
-            $separator = $matches[2];
-            $remaining = $matches[3];
+            $type = strtolower($matches[1]);
+            if(in_array($type, ['module', 'page', 'base', 'component', 'layout', 'template'], true)) {
+                $type.='s';
+            }
+            $bladeName = $matches[3];
 
-            return $this->resolvePath($context, $module, $remaining, $alias);
+            return $this->resolvePath($context, $module, $bladeName, $type);
         }
 
         return $this->resolvePath($context, $module, $blade, '');
     }
+
 
     /**
      * Share data cho một context
