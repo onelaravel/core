@@ -468,7 +468,7 @@ class ViewContextManager implements OctaneCompatible
             $sharedDataFiltered, // Shared data (không có keys trùng với variables)
             [
                 'module_slug' => $module,
-                'context' => $context,
+                '__context__' => $context,
             ],
             $dataFiltered // Data từ render() (không có keys trùng với variables)
         );
