@@ -21,6 +21,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
  */
 trait FilterAction
 {
+    use DatabaseHelper;
     /**
      * @var array $searchable danh sach cac cot co the tim kiem
      * ví dụ: ['id', 'name', 'column' => 'table.column']
@@ -845,7 +846,11 @@ trait FilterAction
                         $this->orderBy($odb, $type);
                     }
                 } elseif (in_array(strtolower($odb), ['random', 'rand()', '@rand', '@random'])) {
-                    $this->orderByRaw('RAND()');
+                    // Tự động chuyển đổi RAND() cho PostgreSQL
+                    $randomFunc = method_exists($this, 'getRandomFunction') 
+                        ? $this->getRandomFunction() 
+                        : (method_exists($this, 'isPostgreSQL') && $this->isPostgreSQL() ? 'RANDOM()' : 'RAND()');
+                    $this->orderByRaw($randomFunc);
                 }
             }
         }
@@ -964,7 +969,7 @@ trait FilterAction
                     if (is_numeric($column)) {
                         $this->checkSortBy($type);
                     } else {
-                        $this->order_by($column, $type);
+                        $this->orderBy($column, $type);
                     }
                 }
             }
@@ -994,9 +999,9 @@ trait FilterAction
         } elseif ($sortBy) {
             $a = explode('-', $sortBy);
             if (count($a) == 2) {
-                $this->order_by($a[0], $a[1]);
+                $this->orderBy($a[0], $a[1]);
             } else {
-                $this->order_by($sortBy, $type ? $type : 'ASC');
+                $this->orderBy($sortBy, $type ? $type : 'ASC');
             }
         }
     }
@@ -1010,11 +1015,11 @@ trait FilterAction
      */
     protected function orderByRule($rule)
     {
-        if ($rule == 'rand()') {
-            $this->orderByRaw($rule);
+        if ($rule == 'rand()' || $rule == 'random()') {
+            $this->orderByRaw($this->getRandomFunction());
         } else {
             $a = explode('-', $rule);
-            $this->order_by($a[0], $a[1]);
+            $this->orderBy($a[0], $a[1]);
         }
     }
 

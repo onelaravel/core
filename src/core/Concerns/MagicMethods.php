@@ -104,7 +104,7 @@ trait MagicMethods
     {
         static::makeMethodListByCurrentClassName();
         if(!is_string($method)) return null;
-        return array_key_exists($method, static::$methods[static::class]['nonstatic'])?static::$methods[static::class]['nostatic'][$method] : (array_key_exists($method, static::$methods['@global']['nonstatic'])?static::$methods['@global']['nonstatic'][$method]:null);
+        return array_key_exists($method, static::$methods[static::class]['nonstatic'])?static::$methods[static::class]['nonstatic'][$method] : (array_key_exists($method, static::$methods['@global']['nonstatic'])?static::$methods['@global']['nonstatic'][$method]:null);
     }
 
 
@@ -135,11 +135,11 @@ trait MagicMethods
                 if(is_callable('static::' . $mt)){
                     
                     return call_user_func_array('static::' . $mt, $params);
-                }elseif (is_callable($method)) {
-                    return call_user_func_array($method, $params);
+                }elseif (is_callable($mt)) {
+                    return call_user_func_array($mt, $params);
                 }
-            }elseif (is_callable($method)) {
-                return call_user_func_array($method, $params);
+            }elseif (is_callable($mt)) {
+                return call_user_func_array($mt, $params);
             }
         }
         else{

@@ -12,7 +12,9 @@ use One\Core\Languages\Locale;
  */
 trait BaseQuery
 {
+    use DatabaseHelper;
 
+    
     protected $table = '';
 
     /**
@@ -59,10 +61,13 @@ trait BaseQuery
         'join' => 'join',
         'leftjoin' => 'leftJoin',
         'rightjoin' => 'rightJoin',
+        'fullouterjoin' => 'fullOuterJoin',
         'crossjoin' => 'crossJoin',
         'joinraw' => 'joinRaw',
         'leftjoinraw' => 'leftJoinRaw',
         'rightjoinraw' => 'rightJoinRaw',
+        'leftjoinwhere' => 'leftJoinWhere',
+        'rightjoinwhere' => 'rightJoinWhere',
         // where
         'where' => 'where',
         'wherenot' => 'whereNot',
@@ -80,13 +85,26 @@ trait BaseQuery
         'wherenotnull' => 'whereNotNull',
         'wherecolumn' => 'whereColumn',
         'wherejsoncontains' => 'whereJsonContains',
+        'wherejsondoesntcontain' => 'whereJsonDoesntContain',
         'wherejsonlength' => 'whereJsonLength',
+        'wherejsonpath' => 'whereJsonPath',
+        'wherejsonpathexists' => 'whereJsonPathExists',
+        'wherejsonpathdoesntexist' => 'whereJsonPathDoesntExist',
         'whereexists' => 'whereExists',
         'wherenotexists' => 'whereNotExists',
         'whereintegerinraw' => 'whereIntegerInRaw',
         'whereintegernotinraw' => 'whereIntegerNotInRaw',
         'whererownumber' => 'whereRowNum',
         'wherefulltext' => 'whereFullText',
+        'whererelation' => 'whereRelation',
+        'wherehas' => 'whereHas',
+        'wheredoesnthave' => 'whereDoesntHave',
+        'wherehasmorph' => 'whereHasMorph',
+        'wheredoesnthavemorph' => 'whereDoesntHaveMorph',
+        'wherelike' => 'whereLike',
+        'wherenotlike' => 'whereNotLike',
+        'whereregexp' => 'whereRegexp',
+        'wherenotregexp' => 'whereNotRegexp',
         // orwhere
         'orwhere' => 'orWhere',
         'orwherenot' => 'orWhereNot',
@@ -104,10 +122,18 @@ trait BaseQuery
         'orwherenull' => 'orWhereNull',
         'orwherenotnull' => 'orWhereNotNull',
         'orwherejsoncontains' => 'orWhereJsonContains',
+        'orwherejsondoesntcontain' => 'orWhereJsonDoesntContain',
         'orwherejsonlength' => 'orWhereJsonLength',
+        'orwherejsonpath' => 'orWhereJsonPath',
         'orwhereexists' => 'orWhereExists',
         'orwherenotexists' => 'orWhereNotExists',
         'orwherefulltext' => 'orWhereFullText',
+        'orwherehas' => 'orWhereHas',
+        'orwheredoesnthave' => 'orWhereDoesntHave',
+        'orwherelike' => 'orWhereLike',
+        'orwherenotlike' => 'orWhereNotLike',
+        'orwhereregexp' => 'orWhereRegexp',
+        'orwherenotregexp' => 'orWhereNotRegexp',
         // groupby
         'groupby' => 'groupBy',
         'groupbyraw' => 'groupByRaw',
@@ -115,8 +141,17 @@ trait BaseQuery
         'having' => 'having',
         'havingraw' => 'havingRaw',
         'havingbetween' => 'havingBetween',
+        'havingin' => 'havingIn',
+        'havingnotin' => 'havingNotIn',
+        'havingnull' => 'havingNull',
+        'havingnotnull' => 'havingNotNull',
         'orhaving' => 'orHaving',
         'orhavingraw' => 'orHavingRaw',
+        'orhavingbetween' => 'orHavingBetween',
+        'orhavingin' => 'orHavingIn',
+        'orhavingnotin' => 'orHavingNotIn',
+        'orhavingnull' => 'orHavingNull',
+        'orhavingnotnull' => 'orHavingNotNull',
         // orderby
         'orderby' => 'orderBy',
         'orderbyraw' => 'orderByRaw',
@@ -1087,621 +1122,7 @@ trait BaseQuery
         return $this;
     }
 
-    /**
-     * build search query
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string|array $keywords
-     * @return static
-     */
-    protected function buildMlcSearch($query, $keywords)
-    {
-        if($t = count($keywords)){
-            
-            $current = Locale::current();
-            if (Locale::default() == $current || !($mlc = $this->_model->getMLCConfig())) {
-                
-                // return $this->where($this->getTable() . '.slug', $slug);
-                return ;
-            }            
-            $this->wereIn($this->getTable() . '.' . $mlc['main_key'], function($query) use($mlc, $current, $keywords){
-                $query->select($this->mlcTable . '.' . $mlc['ref_key'])
-                    ->from($this->mlcTable)
-                    ->whereColumn($this->getTable() . '.' . $mlc['main_key'],  '=', $this->mlcTable . '.' . $mlc['ref_key'])
-                    ->where($this->mlcTable . '.locale', $current)
-                    ->where(function($query) use($keywords){
 
-                        $i = 0;
-                        foreach ($keywords as $keyword) {
-                            if($i == 0){
-                                $query->where($this->mlcTable . '.title', 'like', "$keyword%");
-                                $query->orWhere($this->mlcTable . '.keywords', 'like', "$keyword%");
-                            }else{
-                                $query->orWhere($this->mlcTable . '.title', 'like', "% $keyword%");
-                                $query->orWhere($this->mlcTable . '.keywords', 'like', "% $keyword%");
-                                $query->orWhere($this->mlcTable . '.title', 'like', "$keyword%");
-                                $query->orWhere($this->mlcTable . '.keywords', 'like', "$keyword%");
-                            }
-                            if ($i == 2) {
-                                $query->orWhere($this->mlcTable . '.slug', 'like', "$keyword%");
-                            }
-                            $i++;
-                        }
-                    });
-            });
-            
-            
-            
-        }
-    }
-
-    /**
-     * build search query
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string|array $keywords
-     * @param string|array $search_by
-     * @param string $prefix
-     * @return static
-     */
-    final protected function buildSearchQuery($query, $keywords, $search_by = null, $prefix = null)
-    {
-        if (is_string($keywords) && strlen($keywords) > 0) {
-            if ($search_by) {
-
-                if ($this->__searchMode__ != 'raw' || count($kw = array_filter(array_map('trim', explode(' ', $keywords)), function ($v) {
-                    return strlen($v) > 0;
-                })) > 1) {
-                    $query->where(function ($query) use ($keywords, $search_by, $prefix) {
-
-                        $sAc = substr($keywords, 0, 1) == '@' ? true : false;
-                        if ($sAc) {
-                            $keywords = substr($keywords, 1);
-                        }
-                        $eAc = substr($keywords, strlen($keywords) - 1) == '@' ? true : false;
-                        if ($eAc) {
-                            $keywords = substr($keywords, 0, strlen($keywords) - 1);
-                        }
-                        $searchType = $this->__searchType__;
-                        if ($sAc && $eAc)
-                            $searchType = 'match';
-                        elseif ($sAc)
-                            $searchType = 'start';
-                        elseif ($eAc)
-                            $searchType = 'end';
-
-                        $keywordClean = vnclean($keywords);
-                        $slug = str_slug($keywordClean);
-                        $ucWord = vnucwords($keywords);
-                        $kd = [
-                            $keywords,
-                            $keywordClean,
-                            $slug,
-                            str_replace('-', '', $slug)
-                        ];
-                        if ($ucWord != $keywords) {
-                            $kd[] = $ucWord;
-                        }
-                        $rules = $this->__searchRules__;
-                        if (is_string($search_by)) {
-                            // tim mot cot
-
-                            $f = (count(explode('.', $search_by)) > 1) ? $search_by : $prefix . $search_by;
-                            if ((!$this->searchDisable || !is_array($this->searchDisable) || (!array_key_exists($f, $this->searchDisable) && !in_array($f, $this->searchDisable)))) {
-
-                                $rule = array_key_exists($search_by, $rules) ? $rules[$search_by] : (array_key_exists($f, $rules) ? $rules[$f] : null);
-                                if ($rule) {
-                                    if (!is_array($rule)) $rule = [$rule];
-                                    if (is_array($rule)) {
-                                        $i = 0;
-                                        $t = count($rule);
-                                        foreach ($rule as $rul) {
-                                            $rrs = null;
-                                            if (($kc = str_replace('{clean}', $kd[1], $rul)) != $rul) {
-                                                $rrs = $kc;
-                                            } elseif (($sl = str_replace('{slug}', $kd[2], $rul)) != $rul) {
-                                                $rrs = $sl;
-                                            } elseif (($csl = str_replace('{clean_slug}', $kd[3], $rul)) != $rul) {
-                                                $rrs = $csl;
-                                            }
-                                            if ($rrs) {
-                                                if ($i == 0) {
-                                                    $query->where($f, 'like', $rrs);
-                                                } else {
-                                                    $query->orWhere($f, 'like', $rrs);
-                                                }
-                                                $i++;
-                                            } else {
-                                                foreach ($kd as $s) {
-                                                    $r = str_replace('{query}', $s, $rul);
-                                                    if ($r == $rul) {
-                                                        switch ($searchType) {
-                                                            case 'start':
-                                                                $r = "$s%";
-                                                                break;
-
-                                                            case 'end':
-                                                                $r = "%$s";
-                                                                break;
-                                                            case 'match':
-                                                            case 'all':
-                                                                $r = $s;
-                                                                break;
-                                                            default:
-                                                                $r = "%$s%";
-                                                                break;
-                                                        }
-                                                    }
-                                                    if ($i == 0) {
-                                                        $query->where($f, 'like', $r);
-                                                    } else {
-                                                        $query->orWhere($f, 'like', $r);
-                                                    }
-                                                    $i++;
-                                                }
-                                            }
-                                        }
-
-                                        if (method_exists($this, 'advanceSearch')) {
-                                            if ($i) {
-                                                $query->orWhere(function ($query) use ($kd, $search_by) {
-                                                    $this->advanceSearch($query, $kd, [$search_by]);
-                                                });
-                                            } else {
-                                                $query->where(function ($query) use ($kd, $search_by) {
-                                                    $this->advanceSearch($query, $kd, [$search_by]);
-                                                });
-                                            }
-                                        }
-                                        if ($this->mlcSearchActive && Locale::isDefault()) {
-                                            if ($i || method_exists($this, 'advanceSearch')) {
-                                                $query->orWhere(function ($query) use ($kd) {
-                                                    $this->buildLimitQuery($query, $kd);
-                                                });
-                                            } else {
-                                                $query->where(function ($query) use ($kd) {
-                                                    $this->buildLimitQuery($query, $kd);
-                                                });
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    switch ($searchType) {
-                                        case 'start':
-                                            $query->where($f, 'like', "$kd[0]%")
-                                                ->orWhere($f, 'like', "$kd[1]%")
-                                                ->orWhere($f, 'like', "$kd[2]%")
-                                                ->orWhere($f, 'like', "$kd[3]%");
-                                            break;
-
-                                        case 'end':
-                                            $query->where($f, 'like', "%$kd[0]")
-                                                ->orWhere($f, 'like', "%$kd[1]")
-                                                ->orWhere($f, 'like', "%$kd[2]")
-                                                ->orWhere($f, 'like', "%$kd[3]");
-                                            break;
-                                        case 'match':
-                                        case 'all':
-                                            $query->where($f, 'like', "$kd[0]")
-                                                ->orWhere($f, 'like', "$kd[1]")
-                                                ->orWhere($f, 'like', "$kd[2]")
-                                                ->orWhere($f, 'like', "$kd[3]");
-                                            break;
-                                        default:
-                                            $query->where($f, 'like', "%$kd[0]%")
-                                                ->orWhere($f, 'like', "%$kd[1]%")
-                                                ->orWhere($f, 'like', "%$kd[2]%")
-                                                ->orWhere($f, 'like', "%$kd[3]%");
-                                            break;
-                                    }
-
-                                    if (method_exists($this, 'advanceSearch')) {
-                                        $query->orWhere(function ($query) use ($kd, $search_by) {
-                                            $this->advanceSearch($query, $kd, [$search_by]);
-                                        });
-                                    }
-                                    if ($this->mlcSearchActive && Locale::isDefault()) {
-                                        $query->orWhere(function ($query) use ($kd) {
-                                            $this->buildLimitQuery($query, $kd);
-                                        });
-                                    }
-                                }
-                            }
-                        } elseif (is_array($search_by)) {
-                            // tim theo nhieu cot
-                            $i = 0;
-                            foreach ($search_by as $col) {
-                                $f2 = (count(explode('.', $col)) > 1) ? $col : $prefix . $col;
-                                if ((!$this->searchDisable || !is_array($this->searchDisable) || (!array_key_exists($f2, $this->searchDisable) && !in_array($f2, $this->searchDisable)))) {
-
-                                    $rule = array_key_exists($f2, $rules) ? $rules[$f2] : null;
-                                    if ($rule) {
-                                        if (!is_array($rule)) $rule = [$rule];
-                                        if (is_array($rule)) {
-                                            foreach ($rule as $r) {
-
-                                                $rrs = null;
-                                                if (($kc = str_replace('{clean}', $kd[1], $r)) != $r) {
-                                                    $rrs = $kc;
-                                                } elseif (($sl = str_replace('{slug}', $kd[2], $r)) != $r) {
-                                                    $rrs = $sl;
-                                                } elseif (($csl = str_replace('{clean_slug}', $kd[3], $r)) != $r) {
-                                                    $rrs = $csl;
-                                                }
-                                                if ($rrs) {
-                                                    if ($i == 0) {
-                                                        $query->where($f2, 'like', $rrs);
-                                                    } else {
-                                                        $query->orWhere($f2, 'like', $rrs);
-                                                    }
-                                                    $i++;
-                                                } else
-                                                    foreach ($kd as $s) {
-                                                        $w = str_replace('{query}', $s, $r);
-                                                        if ($w == $r) {
-                                                            switch ($searchType) {
-                                                                case 'start':
-                                                                    $w = "$s%";
-                                                                    break;
-
-                                                                case 'end':
-                                                                    $w = "%$s";
-                                                                    break;
-                                                                case 'match':
-                                                                case 'all':
-                                                                    $w = $s;
-                                                                    break;
-                                                                default:
-                                                                    $w = "%$s%";
-                                                                    break;
-                                                            }
-                                                        }
-                                                        if ($i == 0) {
-                                                            $query->where($f2, "like", $w);
-                                                        } else {
-                                                            $query->orWhere($f2, "like", $w);
-                                                        }
-                                                        $i++;
-                                                    }
-                                            }
-                                        }
-                                    } else {
-                                        foreach ($kd as $s) {
-                                            $w = $s;
-                                            switch ($searchType) {
-                                                case 'start':
-                                                    $w = "$s%";
-                                                    break;
-
-                                                case 'end':
-                                                    $w = "%$s";
-                                                    break;
-                                                case 'match':
-                                                case 'all':
-                                                    $w = $s;
-                                                    break;
-                                                default:
-                                                    $w = "%$s%";
-                                                    break;
-                                            }
-
-                                            if ($i == 0) {
-                                                $query->where($f2, "like", $w);
-                                            } else {
-                                                $query->orWhere($f2, "like", $w);
-                                            }
-                                            $i++;
-                                        }
-                                    }
-                                }
-                            }
-                            if (method_exists($this, 'advanceSearch')) {
-                                if ($i) {
-                                    $query->orWhere(function ($query) use ($kd, $search_by) {
-                                        $this->advanceSearch($query, $kd, $search_by);
-                                    });
-                                } else {
-                                    $query->where(function ($query) use ($kd, $search_by) {
-                                        $this->advanceSearch($query, $kd, $search_by);
-                                    });
-                                }
-                            }
-                            if ($this->mlcSearchActive && Locale::isDefault()) {
-                                if ($i || method_exists($this, 'advanceSearch')) {
-                                    $query->orWhere(function ($query) use ($kd) {
-                                        $this->buildLimitQuery($query, $kd);
-                                    });
-                                } else {
-                                    $query->where(function ($query) use ($kd) {
-                                        $this->buildLimitQuery($query, $kd);
-                                    });
-                                }
-                            }
-                        }
-                    });
-                } else {
-                    $query->where(function ($query) use ($keywords, $search_by, $prefix) {
-
-                        $sAc = substr($keywords, 0, 1) == '@' ? true : false;
-                        if ($sAc) {
-                            $keywords = substr($keywords, 1);
-                        }
-                        $eAc = substr($keywords, strlen($keywords) - 1) == '@' ? true : false;
-                        if ($eAc) {
-                            $keywords = substr($keywords, 0, strlen($keywords) - 1);
-                        }
-                        $searchType = $this->__searchType__;
-                        if ($sAc && $eAc)
-                            $searchType = 'match';
-                        elseif ($sAc)
-                            $searchType = 'start';
-                        elseif ($eAc)
-                            $searchType = 'end';
-
-
-                        $keywordClean = vnclean($keywords);
-                        $slug = str_slug($keywordClean);
-                        $ucWord = vnucwords($keywords);
-                        $kd = [
-                            $keywords,
-                            vntolower($keywords),
-                            $slug
-                        ];
-                        if ($ucWord != $keywords)
-                            $kd[] = $ucWord;
-                        $rules = $this->__searchRules__;
-                        if (is_string($search_by)) {
-                            // tim mot cot
-                            $f = (count(explode('.', $search_by)) > 1) ? $search_by : $prefix . $search_by;
-                            if ((!$this->searchDisable || !is_array($this->searchDisable) || (!array_key_exists($f, $this->searchDisable) && !in_array($f, $this->searchDisable)))) {
-
-                                $rule = array_key_exists($search_by, $rules) ? $rules[$search_by] : (array_key_exists($f, $rules) ? $rules[$f] : null);
-                                if ($rule) {
-                                    if (!is_array($rule)) $rule = [$rule];
-                                    if (is_array($rule)) {
-                                        $i = 0;
-                                        foreach ($rule as $rul) {
-
-                                            $rrs = null;
-                                            if (($kc = str_replace('{lower}', $kd[1], $rul)) != $rul) {
-                                                $rrs = $kc;
-                                            } elseif (($sl = str_replace('{slug}', $kd[2], $rul)) != $rul) {
-                                                $rrs = $sl;
-                                            }
-                                            if ($rrs) {
-                                                if ($i == 0) {
-                                                    $query->where($f, 'like', $rrs);
-                                                } else {
-                                                    $query->orWhere($f, 'like', $rrs);
-                                                }
-                                                $i++;
-                                            } else {
-                                                foreach ($kd as $s) {
-                                                    $r = str_replace('{query}', $s, $rul);
-                                                    if ($r == $rul) {
-                                                        switch ($searchType) {
-                                                            case 'start':
-                                                                $r = "$s%";
-                                                                break;
-
-                                                            case 'end':
-                                                                $r = "%$s";
-                                                                break;
-                                                            case 'match':
-                                                            case 'all':
-                                                                $r = $s;
-                                                                break;
-                                                            default:
-                                                                $r = "%$s%";
-                                                                break;
-                                                        }
-                                                    }
-                                                    if ($i == 0) {
-                                                        $query->where($f, 'like', $r);
-                                                    } else {
-                                                        $query->orWhere($f, 'like', $r);
-                                                    }
-                                                    $i++;
-                                                }
-                                            }
-                                        }
-                                        if (method_exists($this, 'advanceSearch')) {
-                                            if ($i) {
-                                                $query->orWhere(function ($query) use ($kd, $f) {
-                                                    $this->advanceSearch($query, $kd, [$f]);
-                                                });
-                                            } else {
-                                                $query->where(function ($query) use ($kd, $f) {
-                                                    $this->advanceSearch($query, $kd, [$f]);
-                                                });
-                                            }
-                                        }
-                                        if ($this->mlcSearchActive && Locale::isDefault()) {
-                                            if ($i || method_exists($this, 'advanceSearch')) {
-                                                $query->orWhere(function ($query) use ($kd) {
-                                                    $this->buildLimitQuery($query, $kd);
-                                                });
-                                            } else {
-                                                $query->where(function ($query) use ($kd) {
-                                                    $this->buildLimitQuery($query, $kd);
-                                                });
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    switch ($searchType) {
-                                        case 'start':
-                                            $j = 0;
-                                            foreach ($kd as $s) {
-                                                if ($j == 0)
-                                                    $query->where($f, "like", "$s%");
-                                                else
-                                                    $query->orWhere($f, "like", "$s%");
-                                                $j++;
-                                            }
-                                            break;
-
-                                        case 'end':
-                                            $j = 0;
-                                            foreach ($kd as $s) {
-                                                if ($j == 0)
-                                                    $query->where($f, "like", "%$s");
-                                                else
-                                                    $query->orWhere($f, "like", "%$s");
-                                                $j++;
-                                            }
-                                            break;
-                                        case 'match':
-                                        case 'all':
-                                            $j = 0;
-                                            foreach ($kd as $s) {
-                                                if ($j == 0)
-                                                    $query->where($f, "like", "$s");
-                                                else
-                                                    $query->orWhere($f, "like", "$s");
-                                                $j++;
-                                            }
-                                            break;
-                                        default:
-                                            $j = 0;
-                                            foreach ($kd as $s) {
-                                                if ($j == 0)
-                                                    $query->where($f, "like", "%$s%");
-                                                else
-                                                    $query->orWhere($f, "like", "%$s%");
-                                                $j++;
-                                            }
-                                            break;
-                                    }
-                                    if (method_exists($this, 'advanceSearch')) {
-                                        $query->orWhere(function ($query) use ($kd, $f) {
-                                            $this->advanceSearch($query, $kd, [$f]);
-                                        });
-                                    }
-                                    if ($this->mlcSearchActive && Locale::isDefault()) {
-                                        $query->where(function ($query) use ($kd) {
-                                            $this->buildLimitQuery($query, $kd);
-                                        });
-                                    }
-                                }
-                            }
-                        } elseif (is_array($search_by)) {
-                            // tim theo nhieu cot
-
-
-                            $i = 0;
-                            foreach ($search_by as $col) {
-                                $f2 = (count(explode('.', $col)) > 1) ? $col : $prefix . $col;
-                                if ((!$this->searchDisable || !is_array($this->searchDisable) || (!array_key_exists($f2, $this->searchDisable) && !in_array($f2, $this->searchDisable)))) {
-
-                                    $rule = array_key_exists($f2, $rules) ? $rules[$f2] : null;
-                                    if ($rule) {
-                                        if (!is_array($rule)) $rule = [$rule];
-                                        if (is_array($rule)) {
-                                            foreach ($rule as $r) {
-
-                                                $rrs = null;
-                                                if (($kc = str_replace('{lower}', $kd[1], $r)) != $r) {
-                                                    $rrs = $kc;
-                                                } elseif (($sl = str_replace('{slug}', $kd[2], $r)) != $r) {
-                                                    $rrs = $sl;
-                                                }
-                                                if ($rrs) {
-                                                    if ($i == 0) {
-                                                        $query->where($f2, 'like', $rrs);
-                                                    } else {
-                                                        $query->orWhere($f2, 'like', $rrs);
-                                                    }
-                                                    $i++;
-                                                } else
-                                                    foreach ($kd as $s) {
-                                                        $w = str_replace('{query}', $s, $r);
-                                                        if ($w == $r) {
-                                                            switch ($searchType) {
-                                                                case 'start':
-                                                                    $w = "$s%";
-                                                                    break;
-
-                                                                case 'end':
-                                                                    $w = "%$s";
-                                                                    break;
-                                                                case 'match':
-                                                                case 'all':
-                                                                    $w = $s;
-                                                                    break;
-                                                                default:
-                                                                    $w = "%$s%";
-                                                                    break;
-                                                            }
-                                                        }
-                                                        if ($i == 0) {
-                                                            $query->where($f2, "like", $w);
-                                                        } else {
-                                                            $query->orWhere($f2, "like", $w);
-                                                        }
-                                                        $i++;
-                                                    }
-                                            }
-                                        }
-                                    } else {
-                                        foreach ($kd as $s) {
-                                            $w = $s;
-                                            switch ($searchType) {
-                                                case 'start':
-                                                    $w = "$s%";
-                                                    break;
-
-                                                case 'end':
-                                                    $w = "%$s";
-                                                    break;
-                                                case 'match':
-                                                case 'all':
-                                                    $w = $s;
-                                                    break;
-                                                default:
-                                                    $w = "%$s%";
-                                                    break;
-                                            }
-
-                                            if ($i == 0) {
-                                                $query->where($f2, "like", $w);
-                                            } else {
-                                                $query->orWhere($f2, "like", $w);
-                                            }
-                                            $i++;
-                                        }
-                                    }
-                                }
-                            }
-                            if (method_exists($this, 'advanceSearch')) {
-                                if ($i) {
-                                    $query->orWhere(function ($query) use ($kd, $search_by) {
-                                        $this->advanceSearch($query, $kd, $search_by);
-                                    });
-                                } else {
-                                    $query->where(function ($query) use ($kd, $search_by) {
-                                        $this->advanceSearch($query, $kd, $search_by);
-                                    });
-                                }
-                            }
-                            if ($this->mlcSearchActive && Locale::isDefault()) {
-                                if ($i || method_exists($this, 'advanceSearch')) {
-                                    $query->orWhere(function ($query) use ($kd) {
-                                        $this->buildLimitQuery($query, $kd);
-                                    });
-                                } else {
-                                    $query->where(function ($query) use ($kd) {
-                                        $this->buildLimitQuery($query, $kd);
-                                    });
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-        }
-        return $query;
-    }
 
     final protected function lazyLoad($collection)
     {
@@ -1848,8 +1269,8 @@ trait BaseQuery
                     $query->orderBy($f, $b);
                 } else {
                     // ngau nhien
-                    if (strtolower($orderby) == 'rand()') {
-                        $query->orderByRaw($orderby);
+                    if (strtolower($orderby) == 'rand()' || strtolower($orderby) == 'random()') {
+                        $query->orderByRaw($this->getRandomFunction());
                     } else {
                         // mac dinh
                         $f = (count(explode('.', $orderby)) > 1) ? $orderby : $prefix . $orderby;
@@ -2013,12 +1434,225 @@ trait BaseQuery
     {
         return $this->orWhere($column, 'like', '%' . $value . '%');
     }
+
+    /**
+     * Tìm kiếm bằng ILIKE (case-insensitive LIKE)
+     * 
+     * PostgreSQL: ILIKE (native)
+     * MySQL: Sử dụng LOWER() để mô phỏng ILIKE
+     * 
+     * @param string $column tên cột
+     * @param string $value giá trị tìm kiếm
+     * @return static
+     */
+    public function ilike($column, $value = null)
+    {
+        if ($this->isPostgreSQL()) {
+            // PostgreSQL hỗ trợ ILIKE native
+            return $this->where($column, 'ilike', '%' . $value . '%');
+        } else {
+            // MySQL: mô phỏng ILIKE bằng LOWER()
+            return $this->whereRaw('LOWER(' . $column . ') LIKE LOWER(?)', ['%' . $value . '%']);
+        }
+    }
+    
+    /**
+     * Tìm kiếm bằng ILIKE với OR
+     * 
+     * @param string $column tên cột
+     * @param string $value giá trị tìm kiếm
+     * @return static
+     */
+    public function orILike($column, $value = null)
+    {
+        if ($this->isPostgreSQL()) {
+            // PostgreSQL hỗ trợ ILIKE native
+            return $this->orWhere($column, 'ilike', '%' . $value . '%');
+        } else {
+            // MySQL: mô phỏng ILIKE bằng LOWER()
+            return $this->orWhereRaw('LOWER(' . $column . ') LIKE LOWER(?)', ['%' . $value . '%']);
+        }
+    }
+    /**
+     * Full-text search
+     * 
+     * MySQL: MATCH(columns) AGAINST(search)
+     * PostgreSQL: to_tsvector(columns) @@ to_tsquery(search)
+     * 
+     * @param string|array $columns Cột hoặc mảng cột để search
+     * @param string $value Giá trị tìm kiếm
+     * @param array $options Options (mode, language, etc.)
+     * @return static
+     */
+    public function whereFullText($columns, string $value, array $options = [])
+    {
+        $sql = $this->getFullTextSearch($columns, $value);
+        return $this->whereRaw($sql, [$value]);
+    }
+    
+    /**
+     * Full-text search với OR
+     * 
+     * @param string|array $columns
+     * @param string $value
+     * @param array $options
+     * @return static
+     */
+    public function orWhereFullText($columns, string $value, array $options = [])
+    {
+        $sql = $this->getFullTextSearch($columns, $value);
+        return $this->orWhereRaw($sql, [$value]);
+    }
+    
+    /**
+     * Sắp xếp ngẫu nhiên (tự động chuyển đổi cho database)
+     * 
+     * @return static
+     */
+    public function randomOrder()
+    {
+        return $this->orderByRaw($this->getRandomFunction());
+    }
+    
+    /**
+     * Sắp xếp ngẫu nhiên với OR
+     * 
+     * @return static
+     */
+    public function orRandomOrder()
+    {
+        return $this->orderByRaw($this->getRandomFunction());
+    }
+    
+    /**
+     * Where row number (Window function)
+     * 
+     * MySQL: Sử dụng ROW_NUMBER() OVER() (MySQL 8.0+)
+     * PostgreSQL: Sử dụng ROW_NUMBER() OVER()
+     * 
+     * @param int $rowNumber Số thứ tự row
+     * @param array $orderBy Order by columns cho window function
+     * @return static
+     */
+    public function whereRowNum(int $rowNumber, array $orderBy = [])
+    {
+        // ROW_NUMBER() OVER() được hỗ trợ bởi cả MySQL 8.0+ và PostgreSQL
+        $orderByClause = '';
+        if (!empty($orderBy)) {
+            $orderParts = [];
+            foreach ($orderBy as $col => $dir) {
+                if (is_numeric($col)) {
+                    // Nếu key là số, value là column name
+                    $orderParts[] = $dir . ' ASC';
+                } else {
+                    // Nếu key là column, value là direction
+                    $dir = strtoupper($dir) === 'DESC' ? 'DESC' : 'ASC';
+                    $orderParts[] = $col . ' ' . $dir;
+                }
+            }
+            $orderByClause = ' ORDER BY ' . implode(', ', $orderParts);
+        } else {
+            // Mặc định order by primary key
+            $pk = $this->_primaryKeyName ?? 'id';
+            $orderByClause = ' ORDER BY ' . $pk . ' ASC';
+        }
+        
+        return $this->whereRaw(
+            "ROW_NUMBER() OVER({$orderByClause}) = ?",
+            [$rowNumber]
+        );
+    }
+    
+
+    /**
+     * Where in - thêm query so sánh trong (IN)
+     * @param string $column
+     * @param array $array
+     * @return $this
+     */
+    public function in($column, $array = [])
+    {
+        return $this->whereIn($column, $array);
+    }
+    /**
+     * Where not in - thêm query so sánh không trong (NOT IN)
+     * @param string $column
+     * @param array $array
+     * @return $this
+     */
+    public function notIn($column, $array = [])
+    {
+        return $this->whereNotIn($column, $array);
+    }
+
+    /**
+     * Where less than - thêm query so sánh nhỏ hơn (<)
+     * @param string $column
+     * @param mixed $value
+     * @return $this
+     */
+    public function lt($column, $value = null)
+    {
+        return $this->where($column, '<', $value);
+    }
+    /**
+     * Where greater than - thêm query so sánh lớn hơn (>)
+     * @param string $column
+     * @param mixed $value
+     * @return $this
+     */
+    public function gt($column, $value = null)
+    {
+        return $this->where($column, '>', $value);
+    }
+    /**
+     * Where less than or equal to - thêm query so sánh nhỏ hơn hoặc bằng (<=)
+     * @param string $column
+     * @param mixed $value
+     * @return $this
+     */
+    public function lte($column, $value = null)
+    {
+        return $this->where($column, '<=', $value);
+    }
+    /**
+     * Where greater than or equal to - thêm query so sánh lớn hơn hoặc bằng (>=)
+     * @param string $column
+     * @param mixed $value
+     * @return $this
+     */
+    public function gte($column, $value = null)
+    {
+        return $this->where($column, '>=', $value);
+    }
+    /**
+     * Where equal to - thêm query so sánh bằng (=)
+     * @param string $column
+     * @param mixed $value
+     * @return $this
+     */
+    public function eq($column, $value = null)
+    {
+        return $this->where($column, '=', $value);
+    }
+    /**
+     * Where not equal to - thêm query so sánh không bằng (!=)
+     * @param string $column
+     * @param mixed $value
+     * @return $this
+     */
+    public function ne($column, $value = null)
+    {
+        return $this->where($column, '!=', $value);
+    }
+
+
     /**
      * order by
      * @param mixed
      * @param string
      */
-    public function order_by($column = null, $type = 'asc')
+    public function orderBy($column = null, $type = 'asc')
     {
         $orderby = is_array($column) ? $column : [$column => $type];
         if (array_key_exists('@order_by', $this->params)) {

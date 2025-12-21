@@ -5,6 +5,7 @@ namespace One\Core\Repositories;
 use Illuminate\Support\Facades\DB;
 
 trait EloquentQuery{
+    use DatabaseHelper;
     
     protected $table = '';
     /**
@@ -723,8 +724,8 @@ trait EloquentQuery{
                     $query->orderBy($f, $b);
                 }else{
                     // ngau nhien
-                    if(strtolower($orderby) == 'rand()'){
-                        $query->orderByRaw($orderby);
+                    if(strtolower($orderby) == 'rand()' || strtolower($orderby) == 'random()'){
+                        $query->orderByRaw($this->getRandomFunction());
                     }
                     else{
                         // mac dinh

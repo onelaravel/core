@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Exception;
 use One\Core\Concerns\MagicMethods;
 use One\Core\Events\EventMethods;
-use One\Core\Repositories\BaseQuery;
-use One\Core\Repositories\CRUDAction;
 
 /**
  * Base Repository class providing common functionality for all repositories
@@ -16,7 +14,7 @@ use One\Core\Repositories\CRUDAction;
  */
 abstract class BaseRepository
 {
-    use BaseQuery, GettingAction, CRUDAction, FilterAction, DataAction, OwnerAction, CacheAction, FileAction, EventMethods, MagicMethods;
+    use BaseQuery, BaseSearchQuery, GettingAction, CRUDAction, FilterAction, DataAction, OwnerAction, CacheAction, FileAction, EventMethods, MagicMethods;
     
     // Constants for better maintainability
     private const EVENT_PREFIXES = ['on', 'emit'];
@@ -158,7 +156,7 @@ abstract class BaseRepository
         }
         
         if (!empty($params)) {
-            $this->handleMethodWithParams($key, $params);
+            $this->handleMethodWithParams($method, $params);
         } else {
             $this->handleMethodWithoutParams($method, $params);
         }
@@ -213,7 +211,8 @@ abstract class BaseRepository
     private function handleMethodWithParams(string $key, array $params): void
     {
         $value = $params[0];
-        
+        $key2 = $key;
+        $key = strtolower($key);
         if ($this->handleWhereable($key, $value)) {
             return;
         }
@@ -230,7 +229,7 @@ abstract class BaseRepository
             return;
         }
         
-        $this->handleEventListeners($key, $params);
+        $this->handleEventListeners($key2, $params);
     }
 
     /**
@@ -306,7 +305,7 @@ abstract class BaseRepository
             ctype_upper(substr($event, 0, 1)) && 
             count($params) && 
             (is_callable($params[0]) || is_callable([$this, $params[0]]))) {
-            $this->_addEventListener($event, $params[0]);
+            $this->_addEventListener(strtolower($event), $params[0]);
         }
     }
 
