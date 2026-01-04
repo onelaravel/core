@@ -88,6 +88,7 @@ class ViewContextManager implements OctaneCompatible
                 '__base__' => $basePath . '.',
                 '__component__' => ($directories['components'] ?? "{$basePath}.components") . '.',
                 '__template__' => ($directories['templates'] ?? "{$basePath}.templates") . '.',
+                '__partial__' => ($directories['partials'] ?? "{$basePath}.partials") . '.',
                 // '__pagination__' => $basePath . '.pagination.',
                 '__layout__' => ($directories['layouts'] ?? "{$basePath}.layouts") . '.',
                 '__module__' => ($directories['modules'] ?? "{$basePath}.modules") . '.',
@@ -295,6 +296,7 @@ class ViewContextManager implements OctaneCompatible
             '__base__' => $basePath . '.',
             '__component__' => ($directories['components'] ?? "{$basePath}.components") . '.',
             '__template__' => ($directories['templates'] ?? "{$basePath}.templates") . '.',
+            '__partial__' => ($directories['partials'] ?? "{$basePath}.partials") . '.',
             // '__pagination__' => $basePath . '.pagination.',
             '__layout__' => ($directories['layouts'] ?? "{$basePath}.layouts") . '.',
             '__module__' => ($directories['modules'] ?? "{$basePath}.modules") . '.',
@@ -326,7 +328,7 @@ class ViewContextManager implements OctaneCompatible
     public function resolvePath(string $context, string $module, string $blade, string $type = ''): string
     {
         // Danh sách type hợp lệ
-        $validTypes = ['', 'base', 'modules', 'pages', 'components', 'layouts', 'templates'];
+        $validTypes = ['', 'base', 'modules', 'pages', 'components', 'partials', 'layouts', 'templates'];
         
         // Validate và normalize type
         if (!in_array($type, $validTypes, true)) {
@@ -383,7 +385,7 @@ class ViewContextManager implements OctaneCompatible
     {
         if(preg_match('/^@([a-zA-Z0-9_]+)([\.\:])(.+)$/i', $blade, $matches)) {
             $type = strtolower($matches[1]);
-            if(in_array($type, ['module', 'page', 'base', 'component', 'layout', 'template'], true)) {
+            if(in_array($type, ['module', 'page', 'base', 'component', 'partial', 'layout', 'template'], true)) {
                 $type.='s';
             }
             $bladeName = $matches[3];
@@ -475,6 +477,7 @@ class ViewContextManager implements OctaneCompatible
                 '__base__' => $context . '.',
                 '__component__' => $context . '.components.',
                 '__template__' => $context . '.templates.',
+                '__partial__' => $context . '.partials.',
                 // '__pagination__' => $context . '.pagination.',
                 '__layout__' => $context . '.layouts.',
                 '__module__' => $context . '.modules.',
