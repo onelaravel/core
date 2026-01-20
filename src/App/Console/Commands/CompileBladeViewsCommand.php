@@ -4,7 +4,7 @@ namespace One\App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use One\Shared\Services\SmartBladeCompiler;
+use One\App\View\Compilers\SmartBladeCompiler;
 
 class CompileBladeViewsCommand extends Command
 {
