@@ -24,7 +24,7 @@
         },
         "files": [
             "src/helpers/__loader__.php",
-            "src/Support/helpers.php"
+            "src/App/Support/helpers.php"
         ],
         "classmap": [
             "src/config/"

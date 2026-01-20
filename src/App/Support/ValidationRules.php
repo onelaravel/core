@@ -1,6 +1,6 @@
 <?php
 
-namespace One\Support;
+namespace One\App\Support;
 
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
