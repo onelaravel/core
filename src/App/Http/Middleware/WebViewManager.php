@@ -2,7 +2,7 @@
 
 namespace One\App\Http\Middleware;
 
-use One\App\Services\ViewHelperService;
+use One\App\View\Services\ViewHelperService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;

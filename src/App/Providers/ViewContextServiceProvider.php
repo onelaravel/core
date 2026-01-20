@@ -4,8 +4,8 @@ namespace One\App\Providers;
 
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use One\App\Services\ViewContextService;
-use One\App\Services\ViewHelperService;
+use One\App\View\Services\ViewContextService;
+use One\App\View\Services\ViewHelperService;
 use One\Core\Engines\ViewContextManager;
 
 /**

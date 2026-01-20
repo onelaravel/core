@@ -3,25 +3,25 @@
 namespace One\App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use One\App\Services\BladeCompilers\SubscribeDirectiveService;
-use One\App\Services\BladeCompilers\CommonDirectiveService;
-use One\App\Services\BladeCompilers\YieldDirectiveService;
-use One\App\Services\BladeCompilers\WrapperDirectiveService;
-use One\App\Services\BladeCompilers\ClientSideDirectiveService;
+use One\App\View\Compilers\SubscribeDirectiveService;
+use One\App\View\Compilers\CommonDirectiveService;
+use One\App\View\Compilers\YieldDirectiveService;
+use One\App\View\Compilers\WrapperDirectiveService;
+use One\App\View\Compilers\ClientSideDirectiveService;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
-use One\App\Services\BladeCompilers\SimplePhpStructureParserService;
-use One\App\Services\BladeCompilers\EventDirectiveService;
-use One\App\Services\BladeCompilers\AttrDirectiveService;
-use One\App\Services\BladeCompilers\VarsDirectiveService;
-use One\App\Services\BladeCompilers\LetConstDirectiveService;
-use One\App\Services\BladeCompilers\TemplateDirectiveService;
-use One\App\Services\BladeCompilers\ServerSideDirectiveService;
-use One\App\Services\BladeCompilers\BlockDirectiveService;
-use One\App\Services\BladeCompilers\SetupDirectiveService;
-use One\App\Services\BladeCompilers\BindingDirectiveService;
-use One\App\Services\BladeCompilers\PageDirectiveService;
-use One\App\Services\BladeCompilers\OutDirectiveService;
+use One\App\View\Compilers\SimplePhpStructureParserService;
+use One\App\View\Compilers\EventDirectiveService;
+use One\App\View\Compilers\AttrDirectiveService;
+use One\App\View\Compilers\VarsDirectiveService;
+use One\App\View\Compilers\LetConstDirectiveService;
+use One\App\View\Compilers\TemplateDirectiveService;
+use One\App\View\Compilers\ServerSideDirectiveService;
+use One\App\View\Compilers\BlockDirectiveService;
+use One\App\View\Compilers\SetupDirectiveService;
+use One\App\View\Compilers\BindingDirectiveService;
+use One\App\View\Compilers\PageDirectiveService;
+use One\App\View\Compilers\OutDirectiveService;
 
 class BladeDirectiveServiceProvider extends ServiceProvider
 {

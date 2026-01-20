@@ -2,7 +2,7 @@
 
 namespace One\App\View\Composers;
 
-use One\App\Services\ViewHelperService;
+use One\App\View\Services\ViewHelperService;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 

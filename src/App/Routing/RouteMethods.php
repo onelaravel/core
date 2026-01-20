@@ -4,7 +4,7 @@ namespace One\App\Routing;
 
 use One\App\Support\SPA;
 use Illuminate\Support\Facades\Route;
-use One\App\System;
+use One\App\Routing\System;
 
 trait RouteMethods
 {

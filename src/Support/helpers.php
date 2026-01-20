@@ -1,5 +1,7 @@
 <?php
 
+use One\App\Support\ViewState;
+use One\App\View\Services\ViewStorageService;
 use One\Core\Engines\ViewContextManager;
 
 /**
@@ -88,9 +90,6 @@ function getContextVariable(string $context, string $variable): ?string
 {
     return viewContextManager()->getContextVariable($context, $variable);
 }
-
-use One\Shared\Services\ViewStorageService;
-use One\App\Support\ViewState;
 
 if(!function_exists('useState')) {
     function useState($value) {
