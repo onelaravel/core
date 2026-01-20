@@ -19,10 +19,12 @@
     },
     "autoload": {
         "psr-4": {
-            "One\\Core\\": "src/core/"
+            "One\\Core\\": "src/core/",
+            "One\\App\\": "src/App/"
         },
         "files": [
-            "src/helpers/__loader__.php"
+            "src/helpers/__loader__.php",
+            "src/Support/helpers.php"
         ],
         "classmap": [
             "src/config/"
@@ -31,7 +33,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "One\\Core\\Providers\\OneServiceProvider"
+                "One\\Core\\Providers\\OneServiceProvider",
+                "One\\App\\Providers\\OneServiceProvider"
             ],
             "aliases": {
                 "One": "One\\Core\\Facades\\One"
