@@ -34,7 +34,11 @@
 - **[Macro Optimization](./MACRO_OPTIMIZATION.md)** - Tối ưu Macro system
 - **[Octane Compatibility Report](./OCTANE_COMPATIBILITY_REPORT.md)** - Báo cáo tương thích Laravel Octane
 
-### 🔧 Advanced Features
+### � Helpers & Utilities
+
+- **[Helpers Guide](./HELPERS_GUIDE.md)** - Hướng dẫn sử dụng các hàm helper
+
+### �🔧 Advanced Features
 
 - **[Macro and Attribute Methods Analysis](./MACRO_AND_ATTRIBUTE_METHODS_ANALYSIS.md)** - Phân tích Macro và Attribute Methods
 - **[Macro and Attribute Methods Guide](./MACRO_AND_ATTRIBUTE_METHODS_GUIDE.md)** - Hướng dẫn sử dụng Macro và Attribute Methods

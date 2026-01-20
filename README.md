@@ -530,6 +530,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **[Response Methods Usage](./docs/RESPONSE_METHODS_USAGE.md)** - Hướng dẫn ResponseMethods
 - **[View Context Manager Guide](./docs/VIEW_CONTEXT_MANAGER_GUIDE.md)** - Hướng dẫn ViewContextManager
 - **[Service Architecture Analysis](./docs/SERVICE_ARCHITECTURE_ANALYSIS.md)** - Phân tích kiến trúc Service
+- **[Helpers Guide](./docs/HELPERS_GUIDE.md)** - Hướng dẫn sử dụng các hàm helper
 
 ### Tài Liệu Khác
 
